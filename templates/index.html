@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAM Forecast</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>GAM Forecast</h1>
+        
+        <!-- Email Input Form -->
+        <div id="emailFormContainer">
+            <form id="emailForm">
+                <div class="form-group">
+                    <label for="subject">Email Subject:</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="body">Email Body:</label>
+                    <textarea id="body" name="body" required></textarea>
+                </div>
+                
+                <!-- File Upload Section -->
+                <div class="form-group">
+                    <label for="fileUpload">Attachments (CSV, Excel, Text files):</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="fileUpload" name="files" multiple accept=".csv,.xlsx,.xls,.txt" class="file-input">
+                        <div class="file-upload-info">
+                            <p>Supported formats: CSV, Excel (.xlsx, .xls), Text (.txt)</p>
+                            <p>Maximum file size: 10MB per file</p>
+                        </div>
+                    </div>
+                    <div id="fileList" class="file-list"></div>
+                </div>
+                
+                <button type="submit">Process Email</button>
+            </form>
+        </div>
+        
+        <!-- <div id="loading" class="loading">
+            Processing...
+        </div> -->
+        
+        <!-- <div id="error" class="error"></div> -->
+        
+        <!-- Editable Form (hidden initially) -->
+        <div id="editableForm" class="hidden">
+            <h2>Edit Campaign Parameters</h2>
+            
+            <!-- Error Display -->
+            <div id="error" class="error"></div>
+            
+            <!-- Keywords Section -->
+            <div class="form-section">
+                <h3>Keywords</h3>
+                <p>Select the keywords you want to target:</p>
+                <div class="cohort-search-section">
+                    <div class="search-input-container">
+                        <input type="text" id="keywordInput" placeholder="Add new keyword..." class="search-input" autocomplete="off">
+                    </div>
+                    <button type="button" onclick="addNewKeyword()" id="addKeywordBtn" class="search-btn">Add Keyword</button>
+                    <button type="button" onclick="getAbvrsFromKeywords()" id="getAbvrsFromKeywordsBtn" class="search-btn" style="background-color: #FF9800;">Get ABVRs from Keywords</button>
+                </div>
+                <div id="keywordsContainer"></div>
+            </div>
+            
+            <!-- Cohorts Section -->
+            <div class="form-section">
+                <h3>Cohorts</h3>
+                <p>Select the cohorts you want to target:</p>
+                <div class="cohort-search-section">
+                    <div class="search-input-container">
+                        <input type="text" id="cohortSearch" placeholder="Search for cohorts..." class="search-input" autocomplete="off">
+                        <div id="searchDropdown" class="search-dropdown"></div>
+                    </div>
+                    <button type="button" onclick="addSelectedCohort()" class="search-btn">Add Selected</button>
+                </div>
+                <div id="cohortsContainer"></div>
+            </div>
+            
+            <!-- Locations Section -->
+            <div class="form-section">
+                <h3>Locations</h3>
+                <p>Select the locations you want to target:</p>
+                <div class="location-chips-section">
+                    <div class="location-chips-group">
+                        <div class="location-chips-label">Included Locations:</div>
+                        <div class="chips-container included-chips" id="includedLocationsChips">
+                            <input type="text" class="chips-input" id="includedLocationInput" placeholder="Type to search locations..." autocomplete="off">
+                        </div>
+                        <div id="includedLocationSearchDropdown" class="search-dropdown"></div>
+                    </div>
+                    <div class="location-chips-group">
+                        <div class="location-chips-label">Excluded Locations:</div>
+                        <div class="chips-container excluded-chips" id="excludedLocationsChips">
+                            <input type="text" class="chips-input" id="excludedLocationInput" placeholder="Type to search locations..." autocomplete="off">
+                        </div>
+                        <div id="excludedLocationSearchDropdown" class="search-dropdown"></div>
+                    </div>
+                </div>
+                <div class="cohort-search-section">
+                    <div class="search-input-container">
+                        <input type="text" id="nameAsIdInput" placeholder="Name as ID (e.g., Haryana_excluding_Gurgaon)..." class="search-input" autocomplete="off">
+                    </div>
+                    <button type="button" onclick="addNewLocation()" class="search-btn">Add Location</button>
+                </div>
+                <div id="locationsContainer"></div>
+                
+                <!-- Locations Not Found Section -->
+                <div id="locationsNotFoundSection" class="locations-not-found-section" style="display: none;">
+                    <h4>📍 Locations Not Found in Database</h4>
+                    <p class="locations-not-found-description">The following locations were extracted from your email but are not in our database. You can add them to the database for future use.</p>
+                    <div id="locationsNotFoundList" class="locations-not-found-list"></div>
+                </div>
+            </div>
+            
+            <!-- Presets Section -->
+            <div class="form-section">
+                <h3>Presets</h3>
+                <p>Select the presets you want to use:</p>
+                <div class="cohort-search-section">
+                    <div class="search-input-container">
+                        <input type="text" id="presetInput" placeholder="Add new preset..." class="search-input" autocomplete="off">
+                    </div>
+                    <button type="button" onclick="addNewPreset()" class="search-btn">Add Preset</button>
+                </div>
+                <div id="presetsContainer"></div>
+            </div>
+            
+            
+            <!-- Creative Settings Section -->
+            <div class="form-section">
+                <h3>Creative Settings</h3>
+                <div class="form-group">
+                    <label for="creativeSize">Creative Size:</label>
+                    <select id="creativeSize">
+                        <option value="Banners">Banners</option>
+                        <option value="Interstitial">Interstitial</option>
+                        <option value="Skinning">Skinning</option>
+                        <option value="Top Banner">Top Banner</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="deviceCategory">Device Category:</label>
+                    <select id="deviceCategory">
+                        <option value="All">All</option>
+                        <option value="Mobile">Mobile</option>
+                        <option value="Desktop">Desktop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="duration">Duration (days):</label>
+                    <input type="number" id="duration" min="1" max="365">
+                </div>
+            </div>
+            
+            <!-- ABVRs Section -->
+            <div class="form-section">
+                <h3>Audience Segments (ABVRs)</h3>
+                <p>Select the audience segments you want to target:</p>
+                <div class="cohort-search-section">
+                    <div class="search-input-container">
+                        <input type="text" id="abvrSearch" placeholder="Search for audience segments by name..." class="search-input" autocomplete="off">
+                        <div id="abvrSearchDropdown" class="search-dropdown"></div>
+                    </div>
+                    <button type="button" onclick="addSelectedABVR()" id="addSelectedABVRBtn" class="search-btn">Add Selected</button>
+                </div>
+                <div id="abvrsContainer"></div>
+            </div>
+            
+            <div class="forecast-buttons-container">
+                <button id="getForecastBtn" onclick="getForecast()">Get Forecast</button>
+                <button id="downloadCsvBtn" onclick="downloadForecastCsv()" class="download-btn" style="display: none;">📥 Download Forecast CSV</button>
+            </div>
+        </div>
+        
+        <!-- Forecast Results -->
+        <div id="forecastResults"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Add Location Modal -->
+    <div id="addLocationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Location to Database</h3>
+                <span class="modal-close" onclick="closeAddLocationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Toggle Switch -->
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="locationModeToggle" onchange="toggleLocationMode()">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Single Location</span>
+                    </label>
+                </div>
+                
+                <!-- Single Location Section -->
+                <div id="singleLocationSection" class="form-group">
+                    <label for="modalSingleLocationSearch">Select Location:</label>
+                    <div class="search-input-container">
+                        <input type="text" id="modalSingleLocationSearch" placeholder="Search for a location..." class="search-input" autocomplete="off">
+                        <div id="modalSingleLocationDropdown" class="search-dropdown"></div>
+                    </div>
+                    <div id="modalSingleLocationChip" class="chips-container single-location-chip"></div>
+                </div>
+                
+                <!-- Location Group Section -->
+                <div id="locationGroupSection" class="form-group" style="display: none;">
+                    <!-- Included Locations Section -->
+                    <div class="form-group">
+                        <label for="modalIncludedLocationSearch">Included Locations:</label>
+                        <div class="search-input-container">
+                            <input type="text" id="modalIncludedLocationSearch" placeholder="Search for locations to include..." class="search-input" autocomplete="off">
+                            <div id="modalIncludedLocationDropdown" class="search-dropdown"></div>
+                        </div>
+                        <div id="modalIncludedLocationsChips" class="chips-container included-chips"></div>
+                    </div>
+                    
+                    <!-- Excluded Locations Section -->
+                    <div class="form-group">
+                        <label for="modalExcludedLocationSearch">Excluded Locations:</label>
+                        <div class="search-input-container">
+                            <input type="text" id="modalExcludedLocationSearch" placeholder="Search for locations to exclude..." class="search-input" autocomplete="off">
+                            <div id="modalExcludedLocationDropdown" class="search-dropdown"></div>
+                        </div>
+                        <div id="modalExcludedLocationsChips" class="chips-container excluded-chips"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modalNameAsId">Name as ID:</label>
+                        <input type="text" id="modalNameAsId" placeholder="Enter name as ID (e.g., Haryana_excluding_Gurgaon)">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeAddLocationModal()" class="btn-secondary">Cancel</button>
+                <button type="button" onclick="saveLocation()" class="btn-primary" id="modalSaveButton">Save Location</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
