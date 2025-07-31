@@ -213,17 +213,17 @@ async def process_email_endpoint(
     body: str = Form(...),
     files: List[UploadFile] = File([]),
     ) -> Dict[str, Any]:
-    # try:
-    #     logger.info(f"Processing email with subject: {subject}")
-    #     result = process_email(subject, body, files)
-    #     logger.info(f"Process email result: {result}")
+    try:
+        logger.info(f"Processing email with subject: {subject}")
+        result = process_email(subject, body, files)
+        logger.info(f"Process email result: {result}")
         
-    #     if "error" in result:
-    #         raise HTTPException(status_code=400, detail=result["error"])
-    #     return result
-    # except Exception as e:
-    #     logger.exception("Error processing email")
-    #     raise HTTPException(status_code=500, detail=str(e))
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except Exception as e:
+        logger.exception("Error processing email")
+        raise HTTPException(status_code=500, detail=str(e))
     return {
         'cohort': ['Small and Medium Industries'], 
         'locations': [{'includedLocations': [{"name": 'Rajasthan,IN,STATE',"id":20468}], 'excludedLocations': [], 'nameAsId': ''}, {'includedLocations': [{"name": 'Uttar Pradesh,IN,STATE',"id":20471}], 'excludedLocations': [], 'nameAsId': ''}, {'includedLocations': [{"name": 'Madhya Pradesh,IN,STATE',"id":20464}], 'excludedLocations': [], 'nameAsId': ''}, {'includedLocations': [{"name": 'Haryana,IN,STATE',"id":20458}], 'excludedLocations': [], 'nameAsId': ''}], 

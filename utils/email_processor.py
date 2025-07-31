@@ -112,7 +112,7 @@ def get_filtered_audience_names_from_llm(keywords, audience_names):
         {audience_list_str}
 
         🔍 **Task**
-        From the above list, select the most relevant audience names that best match the user's intent. Choose as many as possible given they are relevant to the user's intent.
+        From the above list, select the most relevant audience names that best match the user's intent.
         Rank them by relevance, with the most relevant audience first.
 
         🛑 **Important Rules**

@@ -1210,6 +1210,9 @@ async function createPresentation() {
     createPresentationBtn.textContent = 'Creating Presentation...';
     createPresentationBtn.disabled = true;
     
+    const oldSlidesLink = document.querySelector('.slides-link-container');
+    if (oldSlidesLink) oldSlidesLink.remove();
+
     try {
         const response = await fetch(`${API_CONFIG.presentation_api_url}/generate-presentation-from-email`, {
             method: 'POST',
