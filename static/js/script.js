@@ -23,7 +23,8 @@ const API_CONFIG = {
     cohorts_api_url: 'http://172.29.83.22:8080',
     audience_api_url: 'http://172.29.83.21:8081',
     // locations_api_url: 'http://172.23.53.62:8081'
-    locations_api_url: 'http://localhost:8080'
+    locations_api_url: 'http://localhost:8080',
+    presentation_api_url: 'http://localhost:8001'
 };
 
 function showError(message, duration = 5000) {
@@ -862,8 +863,28 @@ function displayEditableForm(data) {
     // Set Creative Settings
     document.getElementById('creativeSize').value = data.creative_size;
     document.getElementById('deviceCategory').value = data.device_category.split(" ")[0];
+    document.getElementById('targetGender').value = data.target_gender;
     document.getElementById('duration').value = parseInt(data.duration.split(" ")[0]);
+
+    // Set Age Selection
+    const selectedAges = data.target_age || [];
+    const ageCheckboxes = document.querySelectorAll('.age-checkbox');
     
+    // Clear all checkboxes first
+    ageCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Check the appropriate ones
+    ageCheckboxes.forEach(checkbox => {
+        if (selectedAges.includes(checkbox.value)) {
+            checkbox.checked = true;
+        }
+    });
+    
+    // Update the display
+    updateAgeSelectedDisplay();
+
     // Display ABVRs with checkboxes and "Select All" option
     const abvrsContainer = document.getElementById('abvrsContainer');
     const abvr_array_from_selected_cohorts = Object.entries(abvrsSelectedFromCohorts).map(([abvrCode, _]) => (abvrCode));
@@ -970,6 +991,31 @@ function setupSelectAllCheckbox(selectAllId, checkboxClass) {
     });
 }
 
+function getPresetNameFromForecastResponse(forecastResponse) {
+    const preset_display_text={
+        "TIL": "TIL_All_Cluster_RNF",
+        "TOI": "TIL_TOI_Only_RNF",
+        "ET": "TIL_ET_Only_RNF",
+        "TOI+ET": "TIL_ET_And_TOI_RNF",
+        "NBT": "TIL_NBT_Only_RNF",
+        "Maharashtra Times": "TIL_MT_Only_RNF",
+        "Vijay Karnataka": "TIL_VK_Only_RNF",
+        "IAG": "TIL_IAG_Only_RNF",
+        "EI Samay": "TIL_EIS_Only_RNF",
+        "Tamil": "TIL_Tamil_Only_RNF",
+        "Telugu": "TIL_Telugu_Only_RNF",
+        "Malayalam": "TIL_Malayalam_Only_RNF",
+        "All Languages": "TIL_All_Languages_RNF"
+    }
+    response={}
+    for (const [key, value] of Object.entries(forecastResponse)) {
+        if (preset_display_text[key]) {
+            response[preset_display_text[key]] = value;
+        }
+    }
+    return response;
+}
+
 async function getForecast() {
     if (!currentData) return;
     
@@ -1029,6 +1075,9 @@ async function getForecast() {
     // Get form values
     const creativeSize = document.getElementById('creativeSize').value;
     const deviceCategory = document.getElementById('deviceCategory').value;
+    const targetGender = document.getElementById('targetGender').value;
+    const targetAge = Array.from(document.querySelectorAll('.age-checkbox:checked'))
+        .map(checkbox => checkbox.value);
     const duration = parseInt(document.getElementById('duration').value);
     
     // Clear previous results
@@ -1046,6 +1095,8 @@ async function getForecast() {
                 preset: selectedPresets,
                 creative_size: creativeSize,
                 device_category: deviceCategory,
+                target_gender: targetGender,
+                target_age: targetAge,
                 duration: duration,
                 abvrs: selectedAbvrs
             })
@@ -1078,6 +1129,12 @@ function displayForecastResults(forecastData) {
         const downloadBtn = document.getElementById('downloadCsvBtn');
         if (downloadBtn) {
             downloadBtn.style.display = 'inline-block';
+        }
+        
+        // Show the presentation button
+        const presentationBtn = document.getElementById('createPresentationBtn');
+        if (presentationBtn) {
+            presentationBtn.style.display = 'inline-block';
         }
         
         for (const [preset, locations] of Object.entries(forecastData)) {
@@ -1124,6 +1181,88 @@ function displayForecastResults(forecastData) {
         if (downloadBtn) {
             downloadBtn.style.display = 'none';
         }
+        
+        // Hide the presentation button if no data
+        const presentationBtn = document.getElementById('createPresentationBtn');
+        if (presentationBtn) {
+            presentationBtn.style.display = 'none';
+        }
+    }
+}
+
+async function createPresentation() {
+    if (!currentForecastData || !currentData) {
+        showErrorToast('No Data', 'No forecast data available for presentation.');
+        return;
+    }
+    
+    // Get selected ABVRs
+    const selectedAbvrs = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    if (selectedAbvrs.length === 0) {
+        showErrorToast('No ABVRs Selected', 'Please select at least one ABVR for the presentation.');
+        return;
+    }
+    
+    const createPresentationBtn = document.getElementById('createPresentationBtn');
+    const originalText = createPresentationBtn.textContent;
+    createPresentationBtn.textContent = 'Creating Presentation...';
+    createPresentationBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_CONFIG.presentation_api_url}/generate-presentation-from-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email_subject: document.getElementById('subject').value,
+                email_body: document.getElementById('body').value,
+                abvrs: selectedAbvrs.join(','),
+                forecast_data: getPresetNameFromForecastResponse(currentForecastData)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.status === 'success') {
+            showSuccessToast('Presentation Created', data.message || 'Presentation has been created successfully!');
+            
+            // Display the Google Slides URL
+            if (data.google_slides_url) {
+                // Create a clickable link to open the Google Slides
+                const slidesLink = document.createElement('div');
+                slidesLink.className = 'slides-link-container';
+                slidesLink.innerHTML = `
+                    <div class="slides-link-content">
+                        <h4>📊 Presentation Generated Successfully!</h4>
+                        <a href="${data.google_slides_url}" target="_blank" class="slides-link-btn">
+                            🎯 Open Google Slides Presentation
+                        </a>
+                        <p class="slides-link-note">Click the button above to view your presentation in Google Slides</p>
+                    </div>
+                `;
+                
+                // Add the link to the forecast results section
+                const forecastResults = document.getElementById('forecastResults');
+                forecastResults.appendChild(slidesLink);
+                
+                // Show info toast with the link
+                showInfoToast('Google Slides Ready', `Your presentation is ready! Click the link above to view it.`);
+            } else {
+                showInfoToast('Presentation Status', data.message || 'Presentation created but no link provided.');
+            }
+        } else {
+            const errorMessage = data.error || data.detail || 'An error occurred while creating the presentation.';
+            showErrorToast('Presentation Error', errorMessage);
+        }
+    } catch (err) {
+        console.error('Error creating presentation:', err);
+        showErrorToast('Presentation Error', 'An error occurred while creating the presentation: ' + err.message);
+    } finally {
+        createPresentationBtn.textContent = originalText;
+        createPresentationBtn.disabled = false;
     }
 }
 
@@ -1724,6 +1863,23 @@ async function addSelectedABVR() {
     }
 }
 
+// Function to update age selected display
+function updateAgeSelectedDisplay() {
+    const selectedAges = Array.from(document.querySelectorAll('.age-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    const displayElement = document.getElementById('ageSelectedDisplay');
+    if (displayElement) {
+        if (selectedAges.length === 0) {
+            displayElement.textContent = 'None';
+        } else if (selectedAges.includes('All')) {
+            displayElement.textContent = 'All Ages';
+        } else {
+            displayElement.textContent = selectedAges.join(', ');
+        }
+    }
+}
+
 // Add event listener for Enter key in keyword input
 document.addEventListener('DOMContentLoaded', function() {
     const keywordInput = document.getElementById('keywordInput');
@@ -1752,6 +1908,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Add event listeners for age checkboxes
+    const ageCheckboxes = document.querySelectorAll('.age-checkbox');
+    ageCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // If "All" is selected, uncheck others
+            if (this.value === 'All' && this.checked) {
+                ageCheckboxes.forEach(cb => {
+                    if (cb !== this) {
+                        cb.checked = false;
+                    }
+                });
+            }
+            // If other options are selected, uncheck "All"
+            else if (this.value !== 'All' && this.checked) {
+                const allCheckbox = document.querySelector('.age-checkbox[value="All"]');
+                if (allCheckbox) {
+                    allCheckbox.checked = false;
+                }
+            }
+            
+            updateAgeSelectedDisplay();
+        });
+    });
 });
 // Locations Not Found Functions
 function displayLocationsNotFound(locationsNotFound) {

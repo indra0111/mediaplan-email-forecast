@@ -582,6 +582,173 @@ tr:hover {
     background-color: #1565C0;
 }
 
+.presentation-btn {
+    background-color: #9C27B0;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.presentation-btn:hover {
+    background-color: #7B1FA2;
+}
+
+.presentation-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Google Slides Link Styling */
+.slides-link-container {
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    color: white;
+}
+
+.slides-link-content {
+    text-align: center;
+}
+
+.slides-link-content h4 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.slides-link-content p {
+    margin: 10px 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.slides-link-btn {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    margin: 15px 0;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.slides-link-btn:hover {
+    background-color: #45a049;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.slides-link-note {
+    font-size: 12px;
+    opacity: 0.8;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+/* Age Selector Styling */
+.age-selector-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fafafa;
+    transition: border-color 0.3s ease;
+}
+
+.age-selector-container:hover {
+    border-color: #007bff;
+}
+
+.age-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.age-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.age-option:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+}
+
+.age-option input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    accent-color: #007bff;
+}
+
+.age-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.age-option:has(input:checked) {
+    background-color: #e3f2fd;
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.age-option:has(input:checked) .age-label {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.age-selected-display {
+    padding: 10px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.age-selected-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.age-selected-text {
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* Responsive design for age selector */
+@media (max-width: 768px) {
+    .age-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .age-options {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Toast Notification System */
 .toast-container {
     position: fixed;

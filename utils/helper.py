@@ -54,7 +54,7 @@ def get_location_id_for_a_single_location(location: str) -> Optional[Dict[str, A
         logger.error(f"Error getting location id for {location}: {e}", exc_info=True)
         return None
 
-def get_forecast(abvr: str, includedLocation: List[Dict[str, Any]], excludedLocation: List[Dict[str, Any]], preset: str, sizes: List[List[int]], devices: List[Dict[str, str]], geoWiseResponse: bool, duration: int, nameAsId: str) -> Optional[Dict[str, Any]]:
+def get_forecast(abvr: str, includedLocation: List[Dict[str, Any]], excludedLocation: List[Dict[str, Any]], preset: str, sizes: List[List[int]], devices: List[Dict[str, str]], geoWiseResponse: bool, duration: int, nameAsId: str, scale: float) -> Optional[Dict[str, Any]]:
     """Get forecast data for a cohort and locations"""
     url = f"{os.getenv('PROD_API_URL')}/forecast?geoWiseResponse={geoWiseResponse}"
     payload = {
@@ -77,11 +77,14 @@ def get_forecast(abvr: str, includedLocation: List[Dict[str, Any]], excludedLoca
     if response.status_code == 200:
         data = response.json()
         if geoWiseResponse:
+            for key, value in data.items():
+                data[key]["user"] = value["user"]*scale
+                data[key]["impr"] = value["impr"]*scale
             return data
         else: 
             userReach = data['CombinedResponse']['user']
             impressions = data['CombinedResponse']['impr']
-        return {nameAsId: {"user": userReach, "impr": impressions}}
+        return {nameAsId: {"user": scale*userReach, "impr": scale*impressions}}
     else:
         logger.error(f"Error getting forecast data: {response.status_code} {response.text}", exc_info=True)
         return None
@@ -186,20 +189,24 @@ def parse_locations_dict(locations: List[Dict[str, Any]]) -> Tuple[List[Dict[str
 def simplify_locations(locations):
     simplified = []
     merged_included = []
-
+    india_found = False
     for loc in locations:
         included = loc.get("includedLocations", [])
         excluded = loc.get("excludedLocations", [])
 
         # Merge condition: single included location, no excluded
         if len(included) == 1 and not excluded:
+            if included[0]["id"] == 2356:
+                india_found = True
             merged_included.append(included[0])
         else:
             simplified.append(loc)
+    if not india_found:
+        merged_included.append({"id": 2356, "name": "India,IN,COUNTRY"})
 
     return simplified,merged_included
 
-def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], presets: List[str], creative_size: str, device_category: str, duration: int) -> Dict[str, Any]:
+def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], presets: List[str], creative_size: str, device_category: str, duration: int, gender: str, age: List[str]) -> Dict[str, Any]:
     """Get forecast data for a cohort and locations"""
     creative_size_dict={
         "Banners": [[300, 200],[728, 90],[300, 600],[320, 50],[120, 600]],
@@ -227,6 +234,32 @@ def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], pr
         "TIL_Malayalam_Only_RNF":"Malayalam",
         "TIL_All_Languages_RNF":"All Languages"
     }
+    gender_scale_dict={
+        "All": 1,
+        "Male": 0.7,
+        "Female": 0.3
+    }
+    age_scale_dict={
+        "All": 1,
+        "18-24": 0.15,
+        "25-34": 0.35,
+        "35-44": 0.3,
+        "45-54": 0.1,
+        "55+": 0.1
+    }
+    scale = 1.0
+    if gender in gender_scale_dict.keys():
+        scale*=gender_scale_dict[gender]
+    
+    age_scale=0.0
+    if "All" in age:
+        age_scale=1.0
+    else:
+        for a in age:
+            if a in age_scale_dict.keys():
+                age_scale+=age_scale_dict[a]
+    scale*=age_scale
+    logger.info(f"scale: {scale}")
     devices= device_category_dict[device_category]
     size= creative_size_dict[creative_size]
     abvrs=audience_segment
@@ -237,12 +270,12 @@ def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], pr
     logger.info(f"merged_included_locations: {merged_included_locations}")
     for preset in presets:
         for location in simplified_locations:
-            forecast = get_forecast(abvrs, location["includedLocations"], location["excludedLocations"], preset, size, devices, False, duration, location["nameAsId"])
+            forecast = get_forecast(abvrs, location["includedLocations"], location["excludedLocations"], preset, size, devices, False, duration, location["nameAsId"], scale)
             if forecast:
                 final_response={**final_response, **forecast}
             else:
                 logger.info(f"Failed to get forecast for {location}")
-        forecast = get_forecast(abvrs, merged_included_locations, [], preset, size, devices, True, duration, "All")
+        forecast = get_forecast(abvrs, merged_included_locations, [], preset, size, devices, True, duration, "All", scale)
         if forecast:
             final_response={**final_response, **forecast}
         else:

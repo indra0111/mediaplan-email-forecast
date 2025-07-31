@@ -46,6 +46,12 @@ def get_response(subject, body, cohorts):
         "TIL_EIS_Only_RNF", "TIL_Tamil_Only_RNF", "TIL_Telugu_Only_RNF",
         "TIL_Malayalam_Only_RNF", "TIL_All_Languages_RNF"]
 
+        🎯 **Available Target Ages**
+        ["18-24", "25-34", "35-44", "45-54", "55+", "All"]
+
+        🎯 **Available Target Genders**
+        ["Male", "Female", "All"]
+
         ---
 
         📦 **Expected Response Format (JSON only)**
@@ -70,6 +76,8 @@ def get_response(subject, body, cohorts):
         "preset": ["preset_name1", "preset_name2"],     // Choose most relevant preset(s)
         "creative_size": "creative_name"                // Choose one from the creative size list
         "device_category": "Mobile",
+        "target_gender": "Male", // Choose one from the available target genders
+        "target_age": ["18-24", "25-34"], // Choose one or more from the available target ages
         "duration": 30
         }}
         ```
@@ -104,7 +112,7 @@ def get_filtered_audience_names_from_llm(keywords, audience_names):
         {audience_list_str}
 
         🔍 **Task**
-        From the above list, select the most relevant audience names that best match the user's intent. 
+        From the above list, select the most relevant audience names that best match the user's intent. Choose as many as possible given they are relevant to the user's intent.
         Rank them by relevance, with the most relevant audience first.
 
         🛑 **Important Rules**
@@ -243,6 +251,8 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     creative_size = response['creative_size']
     device_category = response['device_category']
     duration = response['duration']
+    target_gender = response['target_gender']
+    target_age = response['target_age']
     keywords, auds, left_auds=get_abvrs(subject, body, cohort_list, None)
     return {
         "cohort": cohort_list,
@@ -254,7 +264,9 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
         "duration": str(duration) + " Days",
         "abvrs": auds,
         "left_abvrs": left_auds,
-        "keywords": keywords
+        "keywords": keywords,
+        "target_gender": target_gender,
+        "target_age": target_age
     }
     
 # def get_abvrs_from_keywords(keywords: List[str]) -> Any:

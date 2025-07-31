@@ -151,6 +151,49 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="targetGender">Target Gender:</label>
+                    <select id="targetGender">
+                        <option value="All">All</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="targetAge">Target Age:</label>
+                    <div class="age-selector-container">
+                        <div class="age-options">
+                            <label class="age-option">
+                                <input type="checkbox" value="All" class="age-checkbox">
+                                <span class="age-label">All Ages</span>
+                            </label>
+                            <label class="age-option">
+                                <input type="checkbox" value="18-24" class="age-checkbox">
+                                <span class="age-label">18-24</span>
+                            </label>
+                            <label class="age-option">
+                                <input type="checkbox" value="25-34" class="age-checkbox">
+                                <span class="age-label">25-34</span>
+                            </label>
+                            <label class="age-option">
+                                <input type="checkbox" value="35-44" class="age-checkbox">
+                                <span class="age-label">35-44</span>
+                            </label>
+                            <label class="age-option">
+                                <input type="checkbox" value="45-54" class="age-checkbox">
+                                <span class="age-label">45-54</span>
+                            </label>
+                            <label class="age-option">
+                                <input type="checkbox" value="55+" class="age-checkbox">
+                                <span class="age-label">55+</span>
+                            </label>
+                        </div>
+                        <div class="age-selected-display">
+                            <span class="age-selected-label">Selected: </span>
+                            <span id="ageSelectedDisplay" class="age-selected-text">None</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label for="duration">Duration (days):</label>
                     <input type="number" id="duration" min="1" max="365">
                 </div>
@@ -173,6 +216,7 @@
             <div class="forecast-buttons-container">
                 <button id="getForecastBtn" onclick="getForecast()">Get Forecast</button>
                 <button id="downloadCsvBtn" onclick="downloadForecastCsv()" class="download-btn" style="display: none;">📥 Download Forecast CSV</button>
+                <button id="createPresentationBtn" onclick="createPresentation()" class="presentation-btn" style="display: none;">📊 Create Presentation</button>
             </div>
         </div>
         
