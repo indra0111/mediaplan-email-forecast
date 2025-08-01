@@ -78,13 +78,13 @@ def get_forecast(abvr: str, includedLocation: List[Dict[str, Any]], excludedLoca
         data = response.json()
         if geoWiseResponse:
             for key, value in data.items():
-                data[key]["user"] = value["user"]*scale
-                data[key]["impr"] = value["impr"]*scale
+                data[key]["user"] = round(value["user"]*scale, 2)
+                data[key]["impr"] = round(min(3*data[key]["user"], value["impr"]*scale), 2)
             return data
         else: 
             userReach = data['CombinedResponse']['user']
             impressions = data['CombinedResponse']['impr']
-        return {nameAsId: {"user": scale*userReach, "impr": scale*impressions}}
+        return {nameAsId: {"user": round(scale*userReach, 2), "impr": round(min(3*scale*userReach, scale*impressions), 2)}}
     else:
         logger.error(f"Error getting forecast data: {response.status_code} {response.text}", exc_info=True)
         return None
