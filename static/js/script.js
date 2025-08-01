@@ -22,8 +22,8 @@ let modalExcludedLocations = []; // Store excluded locations in modal
 const API_CONFIG = {
     cohorts_api_url: 'http://172.29.83.22:8080',
     audience_api_url: 'http://172.29.83.21:8081',
-    // locations_api_url: 'http://172.23.53.62:8081'
-    locations_api_url: 'http://localhost:8080',
+    // locations_api_url: 'http://172.23.53.62:8081',
+    locations_api_url: 'http://172.29.83.22:8080',
     presentation_api_url: 'http://localhost:8001'
 };
 

@@ -30,7 +30,7 @@ def get_cohorts() -> Dict[str, Dict[str, Any]]:
         return {}
 
 def get_location_id_for_a_single_location(location: str) -> Optional[Dict[str, Any]]:
-    url = f"{os.getenv('LOCATIONS_API_URL')}/locations/search/{location}"
+    url = f"{os.getenv('LOCATIONS_API_URL')}/locations?name={location}"
     """Get location id for a location"""
     try:
         response = requests.get(url)
@@ -137,13 +137,8 @@ def parse_locations_dict(locations: List[Dict[str, Any]]) -> Tuple[List[Dict[str
                 location_groups_matches = get_top_k_location_group_matches(location_groups, possible_location, k=1)
                 logger.info(f"Matches: {location_groups_matches}")
                 if len(location_groups_matches)>0 and  location_groups_matches[0][1]>0.75:
-                    loation_group_name=location_groups_matches[0][0]
-                    location_group_ids=location_groups_matches[0][2]
-                    parsed_locations.append({
-                        "includedLocations": location_group_ids,
-                        "excludedLocations": [],
-                        "nameAsId": loation_group_name
-                    })
+                    location_group_details=location_groups_matches[0][0]
+                    parsed_locations.append(location_group_details)
                 else:
                     logger.info(f"No location or location group matches found for {possible_location}")
                     locations_not_found.append(possible_location)
