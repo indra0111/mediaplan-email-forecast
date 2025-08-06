@@ -7,11 +7,21 @@ import os
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional
 from sklearn.metrics.pairwise import cosine_similarity
-import google.generativeai as genai
+import openai
 import pandas as pd
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 load_dotenv()
+
+# Configure Azure OpenAI
+openai.api_type = "azure"
+openai.azure_endpoint = os.getenv('AZURE_API_BASE')
+openai.api_key = os.getenv('AZURE_API_KEY')
+openai.api_version = os.getenv('AZURE_API_VERSION', '2024-02-15-preview')
+
+# Initialize Azure OpenAI model
+model_name = os.getenv('AZURE_OPENAI_MODEL_NAME', 'gpt-4o-mini')
+
 logger = logging.getLogger(__name__)
 
 """
@@ -328,15 +338,26 @@ def get_relevant_keywords(subject, body):
     Return only the JSON object with no additional text or explanations.
     """
     
-    genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-    model = genai.GenerativeModel(os.getenv('GEMINI_MODEL'))
-    response = model.generate_content(prompt)
-    cleaned_text = response.text.replace('```json', '').replace('```', '').strip()
+    # Generate response using Azure OpenAI
     try:
-        response_json = json.loads(cleaned_text)
-        return response_json
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing JSON response: {e}", exc_info=True)
+        response = openai.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are an expert media planning assistant specializing in audience targeting. Always respond with valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=1000
+        )
+        cleaned_text = response.choices[0].message.content.replace('```json', '').replace('```', '').strip()
+        try:
+            response_json = json.loads(cleaned_text)
+            return response_json
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}", exc_info=True)
+            return None
+    except Exception as e:
+        logger.error(f"Error calling Azure OpenAI: {e}")
         return None
 
 def filter_and_clean_audience_data(data):

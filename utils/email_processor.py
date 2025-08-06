@@ -1,4 +1,4 @@
-import google.generativeai as genai
+import openai
 import os
 import json
 from dotenv import load_dotenv
@@ -13,11 +13,14 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Configure Gemini API
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+# Configure Azure OpenAI
+openai.api_type = "azure"
+openai.azure_endpoint = os.getenv('AZURE_API_BASE')
+openai.api_key = os.getenv('AZURE_API_KEY')
+openai.api_version = os.getenv('AZURE_API_VERSION', '2024-02-15-preview')
 
-# Initialize Gemini model
-model = genai.GenerativeModel(os.getenv('GEMINI_MODEL'))
+# Initialize Azure OpenAI model
+model_name = os.getenv('AZURE_OPENAI_MODEL_NAME', 'gpt-4o-mini')
 
 
 def get_response(subject, body, cohorts):
@@ -89,15 +92,27 @@ def get_response(subject, body, cohorts):
         
         For devices, you can specify "Mobile", "Desktop", or "All" based on the request context. If device category is not specified, take it as "All. If duration is not specified, take it as 30 days else take the specified duration.".
     """
-    # Generate response
-    response = model.generate_content(prompt)
-    cleaned_text = response.text.replace('```json', '').replace('```', '').strip()
-    # Parse the response text into JSON
+    # Generate response using Azure OpenAI
     try:
-        response_json = json.loads(cleaned_text)
-        return response_json
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing JSON response: {e}")
+        response = openai.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are an intelligent assistant designed to classify email requests into relevant ad cohorts, locations, presets, and creative formats. Always respond with valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=2000
+        )
+        cleaned_text = response.choices[0].message.content.replace('```json', '').replace('```', '').strip()
+        # Parse the response text into JSON
+        try:
+            response_json = json.loads(cleaned_text)
+            return response_json
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}")
+            return None
+    except Exception as e:
+        logger.error(f"Error calling Azure OpenAI: {e}")
         return None
 
 def get_filtered_audience_names_from_llm(keywords, audience_names):
@@ -130,16 +145,28 @@ def get_filtered_audience_names_from_llm(keywords, audience_names):
             ]
         }}
     """
-    # Generate response
-    response = model.generate_content(prompt)
-    cleaned_text = response.text.replace('```json', '').replace('```', '').strip()
-    # Parse the response text into JSON
+    # Generate response using Azure OpenAI
     try:
-        response_json = json.loads(cleaned_text)
-        logger.info(f"Response JSON: {response_json}")
-        return response_json['audiences']
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing JSON response: {e}")
+        response = openai.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are an intelligent assistant designed to select the most relevant audience names from a list. Always respond with valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=1000
+        )
+        cleaned_text = response.choices[0].message.content.replace('```json', '').replace('```', '').strip()
+        # Parse the response text into JSON
+        try:
+            response_json = json.loads(cleaned_text)
+            logger.info(f"Response JSON: {response_json}")
+            return response_json['audiences']
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}")
+            return None
+    except Exception as e:
+        logger.error(f"Error calling Azure OpenAI: {e}")
         return None
     
 def process_top_k_selected_audiences(top_k_selected_audiences, keywords):
