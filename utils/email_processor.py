@@ -42,12 +42,14 @@ def get_response(subject, body, cohorts):
 
         🎨 **Available Creative Sizes**
         ["Banners", "Interstitial", "Skinning", "Top Banner"]
+        Default: "Banners" if not specified
 
         🎛️ **Available Presets**
         ["TIL_All_Cluster_RNF", "TIL_TOI_Only_RNF", "TIL_ET_Only_RNF", "TIL_ET_And_TOI_RNF",
         "TIL_NBT_Only_RNF", "TIL_MT_Only_RNF", "TIL_VK_Only_RNF", "TIL_IAG_Only_RNF",
         "TIL_EIS_Only_RNF", "TIL_Tamil_Only_RNF", "TIL_Telugu_Only_RNF",
         "TIL_Malayalam_Only_RNF", "TIL_All_Languages_RNF"]
+        Default: "TIL_All_Cluster_RNF" if not clearly specified
 
         🎯 **Available Target Ages**
         ["18-24", "25-34", "35-44", "45-54", "55+", "All"]
@@ -55,6 +57,47 @@ def get_response(subject, body, cohorts):
         🎯 **Available Target Genders**
         ["Male", "Female", "All"]
 
+        ---
+        🧠 Demographic Inference Guidelines
+        Use cues from the email body and subject to infer the most relevant target age and target gender. Use the following hints:
+
+        Target Age
+
+        Mentions like "college students", "youth", "Gen Z", or “young audience” → "18-24"
+
+        Words like "young professionals", “working millennials”, or "urban audience" → "25-34"
+
+        Phrases like "middle-aged users", “parents”, “decision makers” → "35-44" or "45-54"
+
+        Terms like “retired”, “senior citizens” → "55+"
+        
+        Choose one or more from the available target ages which are most relevant for targeting audience based on the email content.
+
+        If unclear → "All"
+
+        Target Gender
+
+        Mentions like "women audience", "female users", "moms", etc. → "Female"
+
+        Mentions like "men", "male working professionals", etc. → "Male"
+
+        If not specified or gender-neutral products → "All"
+        
+        
+        📱 Device Category
+
+        Use "Mobile", "Desktop", or "All"
+
+        Infer based on phrases like "mobile-first", "app install", or "responsive"
+
+        If unclear, default to "All"
+        
+
+        🕒 Duration
+
+        Use value if mentioned (e.g. "for 15 days", "2-month campaign") keeping in mind that the duration should be an integer.
+
+        Otherwise, default to 30
         ---
 
         📦 **Expected Response Format (JSON only)**
