@@ -37,7 +37,7 @@ def get_response(subject, body, cohorts):
 
         📚 **Available Cohorts**
         {cohorts}
-
+        Make sure to select the most relevant cohorts only from the list of available cohorts. If no relevant cohort is found, do not select any cohort.
         ---
 
         🎨 **Available Creative Sizes**
@@ -305,10 +305,12 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     if not response:
         return {"error": "Failed to parse Gemini response."}
     cohort_list = response['cohort']
+    valid_cohort_list = []
     abvrs_list = []
     for cohort in cohort_list:
         if cohort not in cohorts:
-            return {"error": f"Invalid cohort: {cohort}."}
+            continue
+        valid_cohort_list.append(cohort)
         abvrs_list.append(cohorts[cohort]['abvrs'])
     abvrs = ",".join(abvrs_list)
     logger.info(f"Response: {response}")
@@ -323,9 +325,9 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     duration = response['duration']
     target_gender = response['target_gender']
     target_age = response['target_age']
-    keywords, auds, left_auds=get_abvrs(subject, body, cohort_list, None)
+    keywords, auds, left_auds=get_abvrs(subject, body, valid_cohort_list, None)
     return {
-        "cohort": cohort_list,
+        "cohort": valid_cohort_list,
         "locations": locations,
         "locations_not_found": locations_not_found,
         "preset": preset,
