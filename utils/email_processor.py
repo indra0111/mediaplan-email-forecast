@@ -25,115 +25,85 @@ model_name = os.getenv('AZURE_OPENAI_MODEL_NAME', 'gpt-4o-mini')
 
 def get_response(subject, body, cohorts):
     prompt = f"""
-        You are an intelligent assistant designed to classify email requests into relevant ad cohorts, locations, presets, and creative formats.
+    You are an AI assistant specialized in analyzing email requests for digital advertising campaigns. Your task is to extract campaign parameters from email content and classify them into appropriate advertising categories.
 
-        ---
+    **CONTEXT:** You're helping media planners classify email requests for digital ad campaigns on Times Internet Limited (TIL) platforms.
 
-        📩 **Email Details**
-        - Subject: {subject}
-        - Body: {body}
+    **EMAIL CONTENT:**
+    Subject: {subject}
+    Body: {body}
 
-        ---
+    **Available Cohorts:**
+    {cohorts}  
+    
+    **Rules:**
+    - Select only from the above list. Do not invent names.
+    - If no relevant cohort exists → return empty array `[]`
+    - Return as array: `["cohort1", "cohort2"]`
 
-        📚 **Available Cohorts**
-        {cohorts}
-        Make sure to select the most relevant cohorts only from the list of available cohorts. If no relevant cohort is found, do not select any cohort.
-        ---
+    **Available Creative Sizes:** ["Banners", "Interstitial", "Skinning", "Top Banner"]
+    - Default: `"Banners"` if not specified
 
-        🎨 **Available Creative Sizes**
-        ["Banners", "Interstitial", "Skinning", "Top Banner"]
-        Default: "Banners" if not specified
+    **Available Presets:**
+    ["TIL_All_Cluster_RNF", "TIL_TOI_Only_RNF", "TIL_ET_Only_RNF", "TIL_ET_And_TOI_RNF",
+    "TIL_NBT_Only_RNF", "TIL_MT_Only_RNF", "TIL_VK_Only_RNF", "TIL_IAG_Only_RNF",
+    "TIL_EIS_Only_RNF", "TIL_Tamil_Only_RNF", "TIL_Telugu_Only_RNF",
+    "TIL_Malayalam_Only_RNF", "TIL_All_Languages_RNF"]  
 
-        🎛️ **Available Presets**
-        ["TIL_All_Cluster_RNF", "TIL_TOI_Only_RNF", "TIL_ET_Only_RNF", "TIL_ET_And_TOI_RNF",
-        "TIL_NBT_Only_RNF", "TIL_MT_Only_RNF", "TIL_VK_Only_RNF", "TIL_IAG_Only_RNF",
-        "TIL_EIS_Only_RNF", "TIL_Tamil_Only_RNF", "TIL_Telugu_Only_RNF",
-        "TIL_Malayalam_Only_RNF", "TIL_All_Languages_RNF"]
-        Default: "TIL_All_Cluster_RNF" if not clearly specified
+    **Preset Rules:**
+    - "TIL_All_Cluster_RNF" → default
+    - "TIL_TOI_Only_RNF" → if "Times of India" mentioned
+    - "TIL_ET_Only_RNF" → if "Economic Times" mentioned
+    - "TIL_ET_And_TOI_RNF" → if TOI+ET or ET+TOI or ET and TOI mentioned
+    - "TIL_NBT_Only_RNF" → if "Navbharat Times" or "Hindi" mentioned
+    - "TIL_MT_Only_RNF" → if "Maharashtra Times" or "Marathi" mentioned
+    - "TIL_VK_Only_RNF" → if "Vijay Karnataka" or "Kannada" mentioned
+    - "TIL_IAG_Only_RNF" → if "I Am Gujarat" or "Gujarati" mentioned
+    - "TIL_EIS_Only_RNF" → if "Ei Samay" mentioned
+    - "TIL_Tamil_Only_RNF" → if "Tamil" mentioned
+    - "TIL_Telugu_Only_RNF" → if "Telugu" mentioned
+    - "TIL_Malayalam_Only_RNF" → if "Malayalam" mentioned
+    - "TIL_All_Languages_RNF" → if "All Languages" or "Regional Languages" mentioned
 
-        🎯 **Available Target Ages**
-        ["18-24", "25-34", "35-44", "45-54", "55+", "All"]
+    **Demographics:**
+    - Target Ages: ["18-24", "25-34", "35-44", "45-54", "55+", "All"]
+    - Age Inference Examples:
+    - "college students", "youth", "Gen Z", "teenagers" → "18-24"
+    - "young professionals", "millennials", "working professionals" → "25-34"
+    - "middle-aged", "parents", "decision makers" → "35-44" or "45-54"
+    - "senior citizens", "retired", "elderly" → "55+"
+    - If unclear or not mentioned → "All"
 
-        🎯 **Available Target Genders**
-        ["Male", "Female", "All"]
+    - Target Genders: ["Male", "Female", "All"]
+    - Gender Inference Examples:
+        - "women", "female", "moms", "ladies" → "Female"
+        - "men", "male", "gentlemen" → "Male"
+        - If gender-neutral or not specified → "All"
 
-        ---
-        🧠 Demographic Inference Guidelines
-        Use cues from the email body and subject to infer the most relevant target age and target gender. Use the following hints:
+    **Device & Duration:**
+    - Device: "Mobile", "Desktop", or "All" (default: "All")
+        - "Mobile" → if only mobile devices mentioned
+        - "Desktop" → if only desktop/computer mentioned
+        - "All" → if multiple devices mentioned or unspecified (DEFAULT)
+    - Duration: extract days as integer (default: 30)
 
-        Target Age
-
-        Mentions like "college students", "youth", "Gen Z", or “young audience” → "18-24"
-
-        Words like "young professionals", “working millennials”, or "urban audience" → "25-34"
-
-        Phrases like "middle-aged users", “parents”, “decision makers” → "35-44" or "45-54"
-
-        Terms like “retired”, “senior citizens” → "55+"
-        
-        Choose one or more from the available target ages which are most relevant for targeting audience based on the email content.
-
-        If unclear → "All"
-
-        Target Gender
-
-        Mentions like "women audience", "female users", "moms", etc. → "Female"
-
-        Mentions like "men", "male working professionals", etc. → "Male"
-
-        If not specified or gender-neutral products → "All"
-        
-        
-        📱 Device Category
-
-        Use "Mobile", "Desktop", or "All"
-
-        Infer based on phrases like "mobile-first", "app install", or "responsive"
-
-        If unclear, default to "All"
-        
-
-        🕒 Duration
-
-        Use value if mentioned (e.g. "for 15 days", "2-month campaign") keeping in mind that the duration should be an integer.
-
-        Otherwise, default to 30
-        ---
-
-        📦 **Expected Response Format (JSON only)**
-
-        Return your response strictly as a **valid JSON object** in the following structure:
-
-        ```json
-        {{
-        "cohort": ["cohort_name1","cohort_name2"]                        // Relevant cohort names
-        "locations": [
-            {{
-            "includedLocations": ["location1", "location2", ...],
-            "excludedLocations": ["location3", "location4", ...],
-            "nameAsId": "location_name1"  // specify a name for this response location
-            }},
-            {{
-            "includedLocations": ["location5", "location6", ...],
-            "excludedLocations": [],
-            "nameAsId": "location_name2"  // specify a name for this response location
-            }}
-        ],
-        "preset": ["preset_name1", "preset_name2"],     // Choose most relevant preset(s)
-        "creative_size": "creative_name"                // Choose one from the creative size list
-        "device_category": "Mobile",
-        "target_gender": "Male", // Choose one from the available target genders
-        "target_age": ["18-24", "25-34"], // Choose one or more from the available target ages
+    **OUTPUT FORMAT:**
+    Return ONLY valid JSON with no additional text or explanations:
+    ```json
+    {{
+        "cohort": ["cohort1", "cohort2"],
+        "preset": ["TIL_All_Cluster_RNF"],
+        "creative_size": "Banners",
+        "device_category": "All",
+        "target_gender": "All",
+        "target_age": ["All"],
         "duration": 30
-        }}
-        ```
-        Choose TIL_All_Cluster_RNF as default preset if nothing is related to preset in the request.
-        Choose Banners as the default creative size if nothing is related to creative size in the request.
-        
-        For locations, if shorthand notations like 2 letter state codes are used, expand them to full state names.
-        Location items should be dictionaries with `includedLocations`, `excludedLocations` and `nameAsId` keys. The key nameAsId is mandatory if size of includedLocations array is not 1 or excludedLocations array size is greater than 0 else it can be left as blank. Do not group multiple locations into one includedLocation list unless they are explicitly mentioned as a single phrase (e.g., "Delhi NCR", "Tier 1 Cities"). Treat each region or state as a separate location dictionary (e.g., "Uttar Pradesh", "Haryana", "Top Metro city" should be separate). If exclusions are mentioned, apply them only to the relevant included region. nameAsId is required when excludedLocations is non-empty or includedLocations has more than one region. Otherwise, it can be left blank. Ensure nameAsId is unique across location objects when present.
-        
-        For devices, you can specify "Mobile", "Desktop", or "All" based on the request context. If device category is not specified, take it as "All. If duration is not specified, take it as 30 days else take the specified duration.".
+    }}
+    
+    **Field Types:**
+    - Arrays: `cohort`, `preset`, `target_age`
+    - Strings: `creative_size`, `device_category`, `target_gender`
+    - Integer: `duration`
     """
     # Generate response using Azure OpenAI
     try:
@@ -161,32 +131,44 @@ def get_response(subject, body, cohorts):
 def get_filtered_audience_names_from_llm(keywords, audience_names):
     audience_list_str = "\n".join([f"- {name}" for name in audience_names])
     prompt = f"""
-        You are an intelligent assistant designed to select the most relevant audience names from a list, based on a user's intent.
+    You are an audience targeting specialist for digital advertising campaigns. Your task is to select the most relevant audience segments based on campaign requirements.
 
         🎯 **User Intent**
         "{keywords}"
 
-        📚 **Available Audiences**
-        {audience_list_str}
+    **AVAILABLE AUDIENCE SEGMENTS:**
+    {audience_list_str}
 
-        🔍 **Task**
-        From the above list, select the most relevant audience names that best match the user's intent.
-        Rank them by relevance, with the most relevant audience first.
+    **SELECTION CRITERIA:**
+    1. **Relevance First** – Select only audiences that directly and strongly match the campaign's target profile.
+    2. **Precision Over Quantity** – Do not include audiences that are only loosely or partially relevant.
+    3. **Behavioral Match** – Consider audience's online behavior, interests, and demographics.
+    4. **Campaign Fit** – Must align with the campaign's stated goals.
 
-        🛑 **Important Rules**
-        - Only choose from the audience names listed above.
-        - Do not invent new audience names.
-        - The output **must** be valid JSON and follow the structure exactly.
+    **SELECTION RULES:**
+    - **Exact Match Only:** Use audience names exactly as shown in the provided list (identical spelling, capitalization, and punctuation).
+    - **No Creation:** Do not invent, modify, or combine audience names.
+    - **Ranking:** Order audiences from most relevant to least relevant.
+    - **No Upper Limit:** If many audiences are equally relevant, include them all.
+    - **Empty Output:** If no relevant audiences are found, return an empty array.
+    - **No Duplicates:** Each audience can appear only once.
 
-        📦 **Expected Response Format**
-        ```json
-        {{
+    **OUTPUT FORMAT:**
+    Return ONLY valid JSON with no additional text:
+    ```json
+    {{
         "audiences": [
-            "audience1",
-            "audience2",
-            ...
-            ]
-        }}
+            "most_relevant_audience",
+            "second_most_relevant_audience",
+            "third_most_relevant_audience"
+        ]
+    }}
+    ```
+
+    **IMPORTANT:**
+    - Return valid JSON only
+    - Include only the most relevant audiences
+    - Ensure all audience names exactly match the provided list
     """
     # Generate response using Azure OpenAI
     try:
@@ -303,7 +285,11 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     cohorts = get_cohorts()
     response = get_response(subject, combined_content, list(cohorts.keys()))
     if not response:
-        return {"error": "Failed to parse Gemini response."}
+        return {"error": "Failed to parse OpenAI response."}
+    
+    # Get locations separately
+    location_response = get_location_response(subject, combined_content)
+    logger.info(f"Location response: {location_response}")
     cohort_list = response['cohort']
     valid_cohort_list = []
     abvrs_list = []
@@ -312,11 +298,9 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
             continue
         valid_cohort_list.append(cohort)
         abvrs_list.append(cohorts[cohort]['abvrs'])
-    abvrs = ",".join(abvrs_list)
+    # abvrs = ",".join(abvrs_list)
     logger.info(f"Response: {response}")
-    locations = response['locations']
-    logger.info(f"Locations before parsing: {locations}")
-    locations, locations_not_found = parse_locations_dict(locations)
+    locations, locations_not_found = parse_locations_dict(location_response)
     logger.info(f"Locations after parsing: {locations}")
     logger.info(f"Locations not found: {locations_not_found}")
     preset = response['preset']
@@ -328,8 +312,8 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     keywords, auds, left_auds=get_abvrs(subject, body, valid_cohort_list, None)
     return {
         "cohort": valid_cohort_list,
-        "locations": locations,
-        "locations_not_found": locations_not_found,
+        "locations": locations,  # Use separately extracted locations
+        "locations_not_found": [],  # You can add logic to check against known locations
         "preset": preset,
         "creative_size": creative_size,
         "device_category": device_category + " Devices",
@@ -341,43 +325,133 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
         "target_age": target_age
     }
     
-# def get_abvrs_from_keywords(keywords: List[str]) -> Any:
-#     all_audience_data = get_audience_data_from_mysql()
-#     if not all_audience_data:
-#         print("Error: Could not retrieve audience data from database")
-#         exit(1)
-#     print(f"Loaded {len(all_audience_data)} audience entries")
+def get_location_response(subject: str, body: str) -> dict:
+    """Extract location information using a focused prompt"""
+    location_prompt = f"""
+    You are a location extraction specialist for digital advertising campaigns in India. Your task is to identify and structure location targeting information from email content.
+
+    **CONTEXT:** You're analyzing email requests for ad campaigns that need geographic targeting across Indian states, cities, and regions.
+
+    **Email Content:**
+    Subject: {subject}
+    Body: {body}
+
+    **LOCATION EXTRACTION RULES:**
+
+    1. **DETECTION:** If no location is mentioned → return empty array `[]`
+
+    2. **ABBREVIATION EXPANSION:** Always expand state abbreviations to full names:
+       - "MH" → "Maharashtra", "KA" → "Karnataka", "TN" → "Tamil Nadu"
+       - "UP" → "Uttar Pradesh", "AP" → "Andhra Pradesh", "MP" → "Madhya Pradesh"
+       - "DL" → "Delhi", "HR" → "Haryana", "PB" → "Punjab"
+
+    3. **LOCATION STRUCTURE:** Each location gets its own dictionary object:
+       - `"includedLocations"`: Array of locations to target
+       - `"excludedLocations"`: Array of locations to exclude (can be empty)
+       - `"nameAsId"`: Unique identifier (required if multiple included locations OR any exclusions)
+
+    4. **SEPARATION RULES:**
+       - Each state/region is separate unless explicitly combined
+       - "Delhi NCR" → single location (combined area)
+       - "Tier 1 Cities" → single location (category)
+       - "UP, Haryana" → two separate location objects
+       - "Maharashtra excluding Mumbai" → one location with exclusions
+
+    5. **COMMON INDIAN LOCATIONS:**
+       **States:** Maharashtra, Karnataka, Tamil Nadu, Telangana, Andhra Pradesh, Delhi, Uttar Pradesh, Bihar, West Bengal, Odisha, Gujarat, Rajasthan, Madhya Pradesh, Chhattisgarh, Kerala, Goa, Punjab, Haryana, Himachal Pradesh, Uttarakhand, Assam, Manipur, Meghalaya, Nagaland, Tripura, Arunachal Pradesh, Mizoram, Sikkim, Jammu & Kashmir, Ladakh
+
+       **Cities:** Mumbai, Delhi, Bengaluru, Chennai, Hyderabad, Kolkata, Pune, Ahmedabad, Jaipur, Lucknow, Kanpur, Nagpur, Indore, Thane, Bhopal, Visakhapatnam, Patna, Vadodara, Ghaziabad, Coimbatore, Raipur, Mysore, Chandigarh, Jodhpur, Gwalior
+
+       **Regions:** North India, South India, East India, West India, Central India, North East, Delhi NCR, Tier 1 Cities, Tier 2 Cities, Metro Cities
+
+    **EXAMPLES:**
+
+    **Example 1 - Single State:**
+    Email mentions: "Target Maharashtra"
+    ```json
+    {{
+        "locations": [
+            {{
+                "includedLocations": ["Maharashtra"],
+                "excludedLocations": [],
+                "nameAsId": ""
+            }}
+        ]
+    }}
+    ```
+
+    **Example 2 - Multiple States:**
+    Email mentions: "Target Karnataka and Tamil Nadu"
+    ```json
+    {{
+        "locations": [
+            {{
+                "includedLocations": ["Karnataka"],
+                "excludedLocations": [],
+                "nameAsId": ""
+            }},
+            {{
+                "includedLocations": ["Tamil Nadu"],
+                "excludedLocations": [],
+                "nameAsId": ""
+            }}
+        ]
+    }}
+    ```
+
+    **Example 3 - State with Exclusions:**
+    Email mentions: "Target Maharashtra excluding Mumbai"
+    ```json
+    {{
+        "locations": [
+            {{
+                "includedLocations": ["Maharashtra"],
+                "excludedLocations": ["Mumbai"],
+                "nameAsId": "maharashtra_excluding_mumbai"
+            }}
+        ]
+    }}
+    ```
+
+    **Example 4 - Regional Targeting:**
+    Email mentions: "Target South India"
+    ```json
+    {{
+        "locations": [
+            {{
+                "includedLocations": ["South India"],
+                "excludedLocations": [],
+                "nameAsId": ""
+            }}
+        ]
+    }}
+    ```
+
+    **OUTPUT FORMAT:**
+    Return ONLY valid JSON with the structure shown above. No additional text or explanations.
+    """
     
-    
-#     cohorts = get_cohorts()
-#     response = get_response(keywords, list(cohorts.keys()))
-#     if not response:
-#         return {"error": "Failed to parse Gemini response."}
-#     cohort_list = response['cohort']
-#     abvrs_list = []
-#     for cohort in cohort_list:
-#         if cohort not in cohorts:
-#             return {"error": f"Invalid cohort: {cohort}."}
-#         abvrs_list.append(cohorts[cohort]['abvrs'])
-#     abvrs = ",".join(abvrs_list)
-#     print("Response:", response)
-#     locations = response['locations']
-#     preset = response['preset']
-#     creative_size = response['creative_size']
-#     device_category = response['device_category']
-#     duration = response['duration']
-#     keywords, auds, left_auds=get_abvrs(subject, body, [])
-#     return {
-#         "cohort": cohort_list,
-#         "locations": locations,
-#         "preset": preset,
-#         "creative_size": creative_size,
-#         "device_category": device_category + " Devices",
-#         "duration": str(duration) + " Days",
-#         "abvrs": auds,
-#         "left_abvrs": left_auds,
-#         "keywords": keywords
-#     }
+    try:
+        response = openai.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are a location extraction specialist. Always respond with valid JSON only."},
+                {"role": "user", "content": location_prompt}
+            ],
+            temperature=0.1,
+            max_tokens=1000
+        )
+        
+        cleaned_text = response.choices[0].message.content.replace('```json', '').replace('```', '').strip()
+        try:
+            response_json = json.loads(cleaned_text)
+            return response_json.get('locations', [])
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing location JSON response: {e}")
+            return []
+    except Exception as e:
+        logger.error(f"Error calling Azure OpenAI for location: {e}")
+        return []
     
 
     

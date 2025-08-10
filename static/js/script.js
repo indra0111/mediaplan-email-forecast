@@ -1205,6 +1205,7 @@ async function createPresentation() {
         return;
     }
     
+    const targetAge = Array.from(document.querySelectorAll('.age-checkbox:checked')).map(checkbox => checkbox.value);
     const createPresentationBtn = document.getElementById('createPresentationBtn');
     const originalText = createPresentationBtn.textContent;
     createPresentationBtn.textContent = 'Creating Presentation...';
@@ -1223,7 +1224,9 @@ async function createPresentation() {
                 email_subject: document.getElementById('subject').value,
                 email_body: document.getElementById('body').value,
                 abvrs: selectedAbvrs.join(','),
-                forecast_data: getPresetNameFromForecastResponse(currentForecastData)
+                forecast_data: getPresetNameFromForecastResponse(currentForecastData),
+                gender: document.getElementById('targetGender').value,
+                age: targetAge,
             })
         });
         
