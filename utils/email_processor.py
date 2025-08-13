@@ -357,13 +357,6 @@ def get_location_response(subject: str, body: str) -> dict:
        - "UP, Haryana" → two separate location objects
        - "Maharashtra excluding Mumbai" → one location with exclusions
 
-    5. **COMMON INDIAN LOCATIONS:**
-       **States:** Maharashtra, Karnataka, Tamil Nadu, Telangana, Andhra Pradesh, Delhi, Uttar Pradesh, Bihar, West Bengal, Odisha, Gujarat, Rajasthan, Madhya Pradesh, Chhattisgarh, Kerala, Goa, Punjab, Haryana, Himachal Pradesh, Uttarakhand, Assam, Manipur, Meghalaya, Nagaland, Tripura, Arunachal Pradesh, Mizoram, Sikkim, Jammu & Kashmir, Ladakh
-
-       **Cities:** Mumbai, Delhi, Bengaluru, Chennai, Hyderabad, Kolkata, Pune, Ahmedabad, Jaipur, Lucknow, Kanpur, Nagpur, Indore, Thane, Bhopal, Visakhapatnam, Patna, Vadodara, Ghaziabad, Coimbatore, Raipur, Mysore, Chandigarh, Jodhpur, Gwalior
-
-       **Regions:** North India, South India, East India, West India, Central India, North East, Delhi NCR, Tier 1 Cities, Tier 2 Cities, Metro Cities
-
     **EXAMPLES:**
 
     **Example 1 - Single State:**

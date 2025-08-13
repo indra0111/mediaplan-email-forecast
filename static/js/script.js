@@ -1237,13 +1237,14 @@ async function createPresentation() {
             
             // Display the Google Slides URL
             if (data.google_slides_url) {
+                const ppt_link = data.google_slides_url.replace('https://drive.google.com/file/d/', 'https://docs.google.com/presentation/d/')
                 // Create a clickable link to open the Google Slides
                 const slidesLink = document.createElement('div');
                 slidesLink.className = 'slides-link-container';
                 slidesLink.innerHTML = `
                     <div class="slides-link-content">
                         <h4>📊 Presentation Generated Successfully!</h4>
-                        <a href="${data.google_slides_url}" target="_blank" class="slides-link-btn">
+                        <a href="${ppt_link}" target="_blank" class="slides-link-btn">
                             🎯 Open Google Slides Presentation
                         </a>
                         <p class="slides-link-note">Click the button above to view your presentation in Google Slides</p>
