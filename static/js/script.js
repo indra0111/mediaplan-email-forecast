@@ -1,14 +1,12 @@
 let currentData = null;
 let availableCohorts = []; // Store all available cohorts for searching
-let abvrsSelectedFromCohorts = {}; // Store all ABVRs selected from cohorts
 let availableLocations = []; // Store all available locations for searching
 let availableLocationGroups = {}; // Store all available location groups for searching
 let selectedCohortFromDropdown = null;
-let selectedABVRFromDropdown = null;
+let selectedPresetFromDropdown = null;
 let selectedIncludedLocationFromDropdown = null;
 let selectedExcludedLocationFromDropdown = null;
 let highlightedIndex = -1;
-let abvrHighlightedIndex = -1;
 let locationHighlightedIndex = -1;
 let excludedLocationHighlightedIndex = -1;
 let includedLocationChips = []; // Array to store included location chips
@@ -18,6 +16,10 @@ let currentForecastData = null; // Store the current forecast data for CSV downl
 let modalSingleLocation = null; // Store the selected single location in modal
 let modalIncludedLocations = []; // Store included locations in modal
 let modalExcludedLocations = []; // Store excluded locations in modal
+let availablePresets = ["TIL_All_Cluster_RNF","TIL_TOI_Only_RNF","TIL_ET_Only_RNF",               
+    "TIL_ET_And_TOI_RNF","TIL_NBT_Only_RNF","TIL_All_Languages_RNF","TIL_MT_Only_RNF",
+    "TIL_VK_Only_RNF","TIL_IAG_Only_RNF","TIL_EIS_Only_RNF","TIL_Tamil_Only_RNF",
+    "TIL_Telugu_Only_RNF","TIL_Malayalam_Only_RNF"]; // Store all available presets for searching
 // API URLs - these should be configured based on your deployment environment
 const API_CONFIG = {
     cohorts_api_url: 'http://172.29.83.22:8080',
@@ -331,11 +333,46 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
         });
         const data = await response.json(); 
         if (response.ok) {
+            data.cohort_abvrs = (data.cohort_abvrs || []).map(abvr => ({
+                abvr: abvr.abvr,
+                name: abvr.name,
+                description: abvr.description,
+                similarity: abvr.similarity,
+                checked: true
+            }));
+            data.abvrs = (data.abvrs || []).map(abvr => ({
+                abvr: abvr.abvr,
+                name: abvr.name,
+                description: abvr.description,
+                similarity: abvr.similarity,
+                checked: true
+            }));
+            data.left_abvrs = (data.left_abvrs || []).map(abvr => ({
+                abvr: abvr.abvr,
+                name: abvr.name,
+                description: abvr.description,
+                similarity: abvr.similarity,
+                checked: false
+            }));
+            data.keywords = (data.keywords || []).map(keyword => ({
+                keyword: keyword,
+                checked: true
+            }));
+            data.cohort = (data.cohort || []).map(cohort => ({
+                name: cohort,
+                checked: true
+            }));
+            data.preset = (data.preset || []).map(preset => ({
+                name: preset,
+                checked: true
+            }));
+            data.locations = (data.locations || []).map(location => ({
+                ...location,
+                checked: true
+            }));
             currentData = data;
             // Get all available cohorts from the helper
             availableCohorts = await getAllAvailableCohorts();
-            abvrsSelectedFromCohorts = await getAllAvailableABVRsForSelectedCohorts();
-            console.log(`abvrsSelectedFromCohorts: `, abvrsSelectedFromCohorts);
             // Get all available locations from the API
             availableLocations = await getAllAvailableLocations();
             // Get all available location groups from the API
@@ -364,35 +401,6 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
         submitButton.textContent = originalButtonText;
     }
 });
-
-async function getAllAvailableABVRsForSelectedCohorts() {
-    try {
-        const abvrsFromCohort = new Set();
-        const filteredCohorts = availableCohorts.filter(cohort => currentData.cohort.includes(cohort.name));
-        for (const cohort of filteredCohorts) {
-            const abvrs = cohort?.abvrs?.split(",").map(abvr => abvr.trim());
-            for (const abvr of abvrs) {
-                abvrsFromCohort.add(abvr);
-            }
-        }
-        const response = await fetch(`${API_CONFIG.audience_api_url}/getAudienceInfo`, {
-            method: 'POST',
-            body: Array.from(abvrsFromCohort).join(",")
-        });
-        const data = await response.json();
-        return data.reduce((acc, abvr) => {
-            acc[abvr.abvr] = {
-              name: abvr.audience_name,
-              description: abvr.description
-            };
-            return acc;
-          }, {});
-          
-    } catch (err) {
-        console.error('Error fetching ABVRs for selected cohorts:', err);
-        return {};
-    }
-}
 
 async function getAllAvailableCohorts() {
     try {
@@ -463,7 +471,7 @@ function setupCohortSearch() {
         const cohortNames = availableCohorts.map(cohort => cohort.name);
         const matchingCohorts = cohortNames.filter(cohort =>
             cohort.toLowerCase().includes(searchTerm) &&
-            !currentData.cohort.includes(cohort)
+            !currentData.cohort.some(c => c.name === cohort)
         );
         
         showDropdown(matchingCohorts, searchTerm);
@@ -500,6 +508,57 @@ function setupCohortSearch() {
     });
 }
 
+function setupPresetSearch() {
+    const searchInput = document.getElementById('presetSearch');
+    const dropdown = document.getElementById('presetSearchDropdown');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim().toLowerCase();
+        highlightedIndex = -1;
+        
+        if (searchTerm.length === 0) {
+            hidePresetDropdown();
+            return;
+        }
+        const matchingPresets = availablePresets.filter(preset =>
+            preset.toLowerCase().includes(searchTerm) &&
+            !currentData.preset.some(p => p.name === preset)
+        );
+        
+        showPresetDropdown(matchingPresets, searchTerm);
+    });
+    
+    searchInput.addEventListener('keydown', function(e) {
+        const dropdownItems = dropdown.querySelectorAll('.search-dropdown-item:not(.no-results)');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedIndex = Math.min(highlightedIndex + 1, dropdownItems.length - 1);
+            updateHighlight(dropdownItems);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = Math.max(highlightedIndex - 1, -1);
+            updateHighlight(dropdownItems);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (highlightedIndex >= 0 && dropdownItems[highlightedIndex]) {
+                selectPresetFromDropdown(dropdownItems[highlightedIndex].textContent);
+            } else {
+                addSelectedPreset();
+            }
+        } else if (e.key === 'Escape') {
+            hidePresetDropdown();
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            hidePresetDropdown();
+        }
+    });
+}
+
 function showDropdown(matchingCohorts, searchTerm) {
     const dropdown = document.getElementById('searchDropdown');
     
@@ -508,6 +567,20 @@ function showDropdown(matchingCohorts, searchTerm) {
     } else {
         dropdown.innerHTML = matchingCohorts.map(cohort => 
             `<div class="search-dropdown-item" onclick="selectCohortFromDropdown('${cohort}')">${cohort}</div>`
+        ).join('');
+    }
+    
+    dropdown.style.display = 'block';
+}
+
+function showPresetDropdown(matchingPresets, searchTerm) {
+    const dropdown = document.getElementById('presetSearchDropdown');
+    
+    if (matchingPresets.length === 0) {
+        dropdown.innerHTML = '<div class="no-results">No matching presets found</div>';
+    } else {
+        dropdown.innerHTML = matchingPresets.map(preset => 
+            `<div class="search-dropdown-item" onclick="selectPresetFromDropdown('${preset}')">${preset}</div>`
         ).join('');
     }
     
@@ -573,6 +646,12 @@ function hideDropdown() {
     highlightedIndex = -1;
 }
 
+function hidePresetDropdown() {
+    const dropdown = document.getElementById('presetSearchDropdown');
+    dropdown.style.display = 'none';
+    highlightedIndex = -1;
+}
+
 function hideLocationDropdown() {
     const dropdown = document.getElementById('includedLocationSearchDropdown');
     if (dropdown) {
@@ -601,6 +680,21 @@ function updateHighlight(dropdownItems) {
     
     if (highlightedIndex === -1) {
         selectedCohortFromDropdown = null;
+    }
+}
+
+function updatePresetHighlight(dropdownItems) {
+    dropdownItems.forEach((item, index) => {
+        if (index === highlightedIndex) {
+            item.classList.add('highlighted');
+            selectedPresetFromDropdown = item.textContent;
+        } else {
+            item.classList.remove('highlighted');
+        }
+    });
+    
+    if (highlightedIndex === -1) {
+        selectedPresetFromDropdown = null;
     }
 }
 
@@ -638,6 +732,12 @@ function selectCohortFromDropdown(cohort) {
     selectedCohortFromDropdown = cohort;
     document.getElementById('cohortSearch').value = cohort;
     hideDropdown();
+}
+
+function selectPresetFromDropdown(preset) {
+    selectedPresetFromDropdown = preset;
+    document.getElementById('presetSearch').value = preset;
+    hidePresetDropdown();
 }
 
 function selectIncludedLocationFromDropdown(option) {
@@ -705,12 +805,31 @@ function selectExcludedLocationFromDropdown(location) {
     if (input) input.value = '';
 }
 
+const updateCheckedAbvrs = (data, field, notSelected) => {
+    let checked = [];
+    for(const item of data){
+        if(!notSelected.includes(item[field])){
+            item.checked = true;
+        } else {
+            item.checked = false;
+        }
+        checked.push(item);
+    }
+    return checked;
+};
+
 async function addSelectedCohort() {
+    const addSelectedCohortBtn = document.getElementById('addSelectedCohortBtn');
+    const originalText = addSelectedCohortBtn.textContent;
+    addSelectedCohortBtn.textContent = 'Adding Cohort...';
+    addSelectedCohortBtn.disabled = true;
     const searchInput = document.getElementById('cohortSearch');
     let cohortToAdd = selectedCohortFromDropdown || searchInput.value.trim();
     
     if (!cohortToAdd) {
         showErrorToast('Missing Cohort', 'Please select or enter a cohort name.');
+        addSelectedCohortBtn.textContent = originalText;
+        addSelectedCohortBtn.disabled = false;
         return;
     }
     
@@ -722,25 +841,65 @@ async function addSelectedCohort() {
     
     if (!exactMatch) {
         showErrorToast('Cohort Not Found', `Cohort "${cohortToAdd}" not found in available cohorts.`);
+        addSelectedCohortBtn.textContent = originalText;
+        addSelectedCohortBtn.disabled = false;
         return;
     }
     
     // Check if already selected
-    if (currentData.cohort.includes(exactMatch)) {
+    let selected = false, found = false
+    const selectedCohorts = Array.from(document.querySelectorAll('.cohort-checkbox:checked')).map(checkbox => checkbox.value);
+    for(const cohort of currentData.cohort){
+        if(cohort.name === exactMatch){
+            if(selectedCohorts.includes(cohort.name)){
+                selected = true;
+            }
+            cohort.checked = true;
+            found = true;
+        } else {
+            cohort.checked = selectedCohorts.includes(cohort.name);
+        }
+    }
+    if (!found) {
+        currentData.cohort.push({name: exactMatch, checked: true});
+    }
+    if (selected) {
         showErrorToast('Already Selected', `Cohort "${exactMatch}" is already selected.`);
+        addSelectedCohortBtn.textContent = originalText;
+        addSelectedCohortBtn.disabled = false;
         return;
     }
     
-    // Add the cohort
-    currentData.cohort.push(exactMatch);
+    const response = await fetch('/add-cohort', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            keywords: (currentData.keywords || []).map(keyword => keyword.keyword),
+            cohorts: (currentData.cohort || []).map(cohort => cohort.name)
+        })
+    });
+    
+    if (response.ok) {
+        const data = await response.json();
+        const cohortAbvrs = data || [];
+        const abvrs_mapped = cohortAbvrs.map(item => item.abvr);
+        const current_cohort_removed_abvrs = (currentData.cohort_abvrs || []).map(item => item.abvr).filter(abvr => !Array.from(document.querySelectorAll('.abvr-checkbox:checked')).map(checkbox => checkbox.value).includes(abvr));
+        const checkedCohortAbvrs = updateCheckedAbvrs(cohortAbvrs, "abvr", current_cohort_removed_abvrs);
+        const abvrs = (currentData.abvrs || []).filter(abvr => !abvrs_mapped.includes(abvr.abvr));
+        const left_abvrs = (currentData.left_abvrs || []).filter(abvr => !abvrs_mapped.includes(abvr.abvr));
+        currentData.cohort_abvrs = checkedCohortAbvrs;
+        currentData.abvrs = abvrs;
+        currentData.left_abvrs = left_abvrs;
+    }
 
-    abvrsSelectedFromCohorts = await getAllAvailableABVRsForSelectedCohorts();
     // Refresh the display
     displayEditableForm(currentData);
     
-    // Re-render chips after form refresh
-    renderIncludedLocationChips();
-    renderExcludedLocationChips();
+    // // Re-render chips after form refresh
+    // renderIncludedLocationChips();
+    // renderExcludedLocationChips();
     
     // Clear the search input and reset selection
     searchInput.value = '';
@@ -749,20 +908,68 @@ async function addSelectedCohort() {
     
     // Show success message
     showSuccessToast('Cohort Added', `Added "${exactMatch}" to the selection.`);
+    addSelectedCohortBtn.textContent = originalText;
+    addSelectedCohortBtn.disabled = false;
+}
+
+async function addSelectedPreset() {
+    const searchInput = document.getElementById('presetSearch');
+    let presetToAdd = selectedPresetFromDropdown || searchInput.value.trim();
+    
+    if (!presetToAdd) {
+        showErrorToast('Missing Preset', 'Please select or enter a preset name.');
+        return;
+    }
+
+    // Check if preset exists in available presets
+    const presetNames = availablePresets.map(preset => preset);
+    const exactMatch = presetNames.find(preset => 
+        preset.toLowerCase() === presetToAdd.toLowerCase()
+    );
+
+    if (!exactMatch) {
+        showErrorToast('Preset Not Found', `Preset "${presetToAdd}" not found in available presets.`);
+        return;
+    }
+    
+    // Check if already selected
+    if (currentData.preset.some(p => p.name === exactMatch)) {
+        showErrorToast('Already Selected', `Preset "${exactMatch}" is already selected.`);
+        return;
+    }
+    
+    // Add the preset
+    currentData.preset.push({name: exactMatch, checked: true});
+
+    // Refresh the display
+    displayEditableForm(currentData);
+    
+    // // Re-render chips after form refresh
+    // renderIncludedLocationChips();
+    // renderExcludedLocationChips();
+    
+    // Clear the search input and reset selection
+    searchInput.value = '';
+    selectedPresetFromDropdown = null;
+    hidePresetDropdown();
+    
+    // Show success message
+    showSuccessToast('Preset Added', `Added "${exactMatch}" to the selection.`);
 }
 
 function displayEditableForm(data) {
+    console.log("data in displayEditableForm", data);
     // Display Cohorts with checkboxes and "Select All" option
     const cohortsContainer = document.getElementById('cohortsContainer');
     cohortsContainer.innerHTML = `
         <div class="select-all-section">
-            <input type="checkbox" id="selectAllCohorts" checked>
+            <input type="checkbox" id="selectAllCohorts" ${data.cohort.every(cohort => cohort.checked) ? 'checked' : ''}>
             <label for="selectAllCohorts"><strong>Select All Cohorts</strong></label>
         </div>
         ${data.cohort.map(cohort => `
             <div class="cohort-item">
-                <input type="checkbox" class="cohort-checkbox" value="${cohort}" checked>
-                <span class="cohort-tag">${cohort}</span>
+                <input type="checkbox" class="cohort-checkbox" value="${cohort.name}" ${cohort.checked ? 'checked' : ''}>
+                <span class="cohort-tag">${cohort.name}</span>
             </div>
         `).join('')}
     `;
@@ -773,7 +980,7 @@ function displayEditableForm(data) {
     console.log("locations in displayEditableForm", locations);
     locationsContainer.innerHTML = `
         <div class="location-select-all">
-            <input type="checkbox" id="selectAllLocations" checked>
+            <input type="checkbox" id="selectAllLocations" ${locations.every(location => location.checked) ? 'checked' : ''}>
             <label for="selectAllLocations"><strong>Select All Locations</strong></label>
         </div>
         ${locations.map((location, index) => {
@@ -820,7 +1027,7 @@ function displayEditableForm(data) {
             const nameAsId = location.nameAsId && !availableLocationGroups[location.nameAsId] ? ` (ID: ${location.nameAsId})` : '';
             
             return `<div class="location-item">
-                <input type="checkbox" class="location-checkbox" value="${index}" checked>
+                <input type="checkbox" class="location-checkbox" value="${index}" ${location.checked ? 'checked' : ''}>
                 <div class="location-content">
                     <div class="location-included">${included}${excludedText}${nameAsId}</div>
                 </div>
@@ -833,13 +1040,13 @@ function displayEditableForm(data) {
     const presets = data.preset || [];
     presetsContainer.innerHTML = `
         <div class="select-all-section">
-            <input type="checkbox" id="selectAllPresets" checked>
+            <input type="checkbox" id="selectAllPresets" ${presets.every(preset => preset.checked) ? 'checked' : ''}>
             <label for="selectAllPresets"><strong>Select All Presets</strong></label>
         </div>
         ${presets.map(preset => `
             <div class="preset-item">
-                <input type="checkbox" class="preset-checkbox" value="${preset}" checked>
-                <span class="preset-tag">${preset}</span>
+                <input type="checkbox" class="preset-checkbox" value="${preset.name}" ${preset.checked ? 'checked' : ''}>
+                <span class="preset-tag">${preset.name}</span>
             </div>
         `).join('')}
     `;
@@ -849,26 +1056,26 @@ function displayEditableForm(data) {
     const keywords = data.keywords || [];
     keywordsContainer.innerHTML = `
         <div class="select-all-section">
-            <input type="checkbox" id="selectAllKeywords" checked>
+            <input type="checkbox" id="selectAllKeywords" ${keywords.every(keyword => keyword.checked) ? 'checked' : ''}>
             <label for="selectAllKeywords"><strong>Select All Keywords</strong></label>
         </div>
         ${keywords.map(keyword => `
             <div class="keyword-item">
-                <input type="checkbox" class="keyword-checkbox" value="${keyword}" checked>
-                <span class="keyword-tag">${keyword}</span>
+                <input type="checkbox" class="keyword-checkbox" value="${keyword.keyword}" ${keyword.checked ? 'checked' : ''}>
+                <span class="keyword-tag">${keyword.keyword}</span>
             </div>
         `).join('')}
     `;
     
     // Set Creative Settings
-    document.getElementById('creativeSize').value = data.creative_size;
-    document.getElementById('deviceCategory').value = data.device_category.split(" ")[0];
-    document.getElementById('targetGender').value = data.target_gender;
+    document.querySelector(`input[name="creativeSize"][value="${data.creative_size}"]`).checked = true;
+    document.querySelector(`input[name="deviceCategory"][value="${data.device_category.split(" ")[0]}"]`).checked = true;
+    document.querySelector(`input[name="targetGender"][value="${data.target_gender}"]`).checked = true;
     document.getElementById('duration').value = parseInt(data.duration.split(" ")[0]);
 
     // Set Age Selection
     const selectedAges = data.target_age || [];
-    const ageCheckboxes = document.querySelectorAll('.age-checkbox');
+    const ageCheckboxes = Array.from(document.querySelectorAll('.age-checkbox'));
     
     // Clear all checkboxes first
     ageCheckboxes.forEach(checkbox => {
@@ -881,24 +1088,12 @@ function displayEditableForm(data) {
             checkbox.checked = true;
         }
     });
-    
-    // Update the display
-    updateAgeSelectedDisplay();
 
     // Display ABVRs with checkboxes and "Select All" option
     const abvrsContainer = document.getElementById('abvrsContainer');
-    const abvr_array_from_selected_cohorts = Object.entries(abvrsSelectedFromCohorts).map(([abvrCode, _]) => (abvrCode));
-    const unfiltered_abvrs = data.abvrs || [];
-    const abvrs = unfiltered_abvrs.filter(abvr => !abvr_array_from_selected_cohorts.includes(abvr.abvr));
-    const unfiltered_left_abvrs = data.left_abvrs || [];
-    const leftAbvrs = unfiltered_left_abvrs.filter(abvr => !abvr_array_from_selected_cohorts.includes(abvr.abvr));
-    // Convert abvrsSelectedFromCohorts object to array for display
-    const cohortAbvrs = Object.entries(abvrsSelectedFromCohorts).map(([abvrCode, abvrData]) => ({
-        abvr: abvrCode,
-        name: abvrData.name,
-        description: abvrData.description,
-        similarity: 1.0 // Default similarity for cohort ABVRs
-    }));
+    const cohortAbvrs = data.cohort_abvrs || [];
+    const model_selected_abvrs = data.abvrs || [];
+    const left_abvrs = data.left_abvrs || [];
     console.log(`cohortAbvrs: `, cohortAbvrs);
     abvrsContainer.innerHTML = `
         <div class="abvr-select-all">
@@ -910,11 +1105,11 @@ function displayEditableForm(data) {
             <div class="abvr-list">
                 ${cohortAbvrs.length > 0 ? cohortAbvrs.map(abvr => `
                     <div class="abvr-item cohort-abvr">
-                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}" checked>
+                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}" ${abvr.checked ? 'checked' : ''}>
                         <div class="abvr-content">
                             <div class="abvr-name">${abvr.name}</div>
                             <div class="abvr-description">${abvr.description}</div>
-                            <div class="abvr-source">Source: Selected Cohorts</div>
+                            <div class="abvr-similarity">Similarity: ${(abvr.similarity * 100).toFixed(1)}%</div>
                             <div class="abvr-code">ABVR: ${abvr.abvr}</div>
                         </div>
                     </div>
@@ -924,9 +1119,9 @@ function displayEditableForm(data) {
         <div class="abvr-section">
             <h4>Selected ABVRs (Recommended)</h4>
             <div class="abvr-list">
-                ${abvrs.map(abvr => `
+                ${model_selected_abvrs.map(abvr => `
                     <div class="abvr-item">
-                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}" checked>
+                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}" ${abvr.checked ? 'checked' : ''}>
                         <div class="abvr-content">
                             <div class="abvr-name">${abvr.name}</div>
                             <div class="abvr-description">${abvr.description}</div>
@@ -940,9 +1135,9 @@ function displayEditableForm(data) {
         <div class="abvr-section">
             <h4>Additional ABVRs</h4>
             <div class="abvr-list">
-                ${leftAbvrs.map(abvr => `
+                ${left_abvrs.map(abvr => `
                     <div class="abvr-item">
-                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}">
+                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}" ${abvr.checked ? 'checked' : ''}>
                         <div class="abvr-content">
                             <div class="abvr-name">${abvr.name}</div>
                             <div class="abvr-description">${abvr.description}</div>
@@ -964,6 +1159,7 @@ function displayEditableForm(data) {
     
     // Setup cohort search functionality
     setupCohortSearch();
+    setupPresetSearch();
 }
 
 function setupSelectAllCheckbox(selectAllId, checkboxClass) {
@@ -974,6 +1170,18 @@ function setupSelectAllCheckbox(selectAllId, checkboxClass) {
     selectAllCheckbox.addEventListener('change', function() {
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
+            // Update the data model for different checkbox types
+            if (checkboxClass === 'preset-checkbox') {
+                updatePresetCheckedStatus(checkbox.value, this.checked);
+            } else if (checkboxClass === 'cohort-checkbox') {
+                updateCohortCheckedStatus(checkbox.value, this.checked);
+            } else if (checkboxClass === 'location-checkbox') {
+                updateLocationCheckedStatus(checkbox.value, this.checked);
+            } else if (checkboxClass === 'keyword-checkbox') {
+                updateKeywordCheckedStatus(checkbox.value, this.checked);
+            } else if (checkboxClass === 'abvr-checkbox') {
+                updateAbvrCheckedStatus(checkbox.value, this.checked);
+            }
         });
     });
     
@@ -987,8 +1195,75 @@ function setupSelectAllCheckbox(selectAllId, checkboxClass) {
             } else {
                 selectAllCheckbox.checked = false;
             }
+            
+            // Update the data model for different checkbox types
+            if (checkboxClass === 'preset-checkbox') {
+                updatePresetCheckedStatus(this.value, this.checked);
+            } else if (checkboxClass === 'cohort-checkbox') {
+                updateCohortCheckedStatus(this.value, this.checked);
+            } else if (checkboxClass === 'location-checkbox') {
+                updateLocationCheckedStatus(this.value, this.checked);
+            } else if (checkboxClass === 'keyword-checkbox') {
+                updateKeywordCheckedStatus(this.value, this.checked);
+            } else if (checkboxClass === 'abvr-checkbox') {
+                updateAbvrCheckedStatus(this.value, this.checked);
+            }
         });
     });
+}
+
+// Add these helper functions for other checkbox types
+function updatePresetCheckedStatus(presetName, isChecked) {
+    if (!currentData || !currentData.preset) return;
+    
+    // Find the preset in currentData and update its checked status
+    const preset = currentData.preset.find(p => p.name === presetName);
+    if (preset) {
+        preset.checked = isChecked;
+        console.log(`Updated preset ${presetName} checked status to: ${isChecked}`);
+    }
+}
+
+function updateCohortCheckedStatus(cohortName, isChecked) {
+    if (!currentData || !currentData.cohort) return;
+    const cohort = currentData.cohort.find(c => c.name === cohortName);
+    if (cohort) {
+        cohort.checked = isChecked;
+    }
+}
+
+function updateLocationCheckedStatus(locationIndex, isChecked) {
+    if (!currentData || !currentData.locations) return;
+    const location = currentData.locations[parseInt(locationIndex)];
+    if (location) {
+        location.checked = isChecked;
+    }
+}
+
+function updateKeywordCheckedStatus(keywordText, isChecked) {
+    if (!currentData || !currentData.keywords) return;
+    const keyword = currentData.keywords.find(k => k.keyword === keywordText);
+    if (keyword) {
+        keyword.checked = isChecked;
+    }
+}
+
+function updateAbvrCheckedStatus(abvrCode, isChecked) {
+    // Update in all three ABVR arrays
+    if (currentData && currentData.cohort_abvrs) {
+        const cohortAbvr = currentData.cohort_abvrs.find(a => a.abvr === abvrCode);
+        if (cohortAbvr) cohortAbvr.checked = isChecked;
+    }
+    
+    if (currentData && currentData.abvrs) {
+        const abvr = currentData.abvrs.find(a => a.abvr === abvrCode);
+        if (abvr) abvr.checked = isChecked;
+    }
+    
+    if (currentData && currentData.left_abvrs) {
+        const leftAbvr = currentData.left_abvrs.find(a => a.abvr === abvrCode);
+        if (leftAbvr) leftAbvr.checked = isChecked;
+    }
 }
 
 function getPresetNameFromForecastResponse(forecastResponse) {
@@ -1016,6 +1291,16 @@ function getPresetNameFromForecastResponse(forecastResponse) {
     return response;
 }
 
+// Add this to your script.js
+function getSelectedValues() {
+    const creativeSize = document.querySelector('input[name="creativeSize"]:checked').value;
+    const deviceCategory = document.querySelector('input[name="deviceCategory"]:checked').value;
+    const targetGender = document.querySelector('input[name="targetGender"]:checked').value;
+    
+    return { creativeSize, deviceCategory, targetGender };
+}
+
+// Update your getForecast function to use this
 async function getForecast() {
     if (!currentData) return;
     
@@ -1026,10 +1311,6 @@ async function getForecast() {
     const originalText = getForecastBtn.textContent;
     getForecastBtn.textContent = 'Getting Forecast...';
     getForecastBtn.disabled = true;
-    
-    // Get selected Cohorts
-    const selectedCohorts = Array.from(document.querySelectorAll('.cohort-checkbox:checked'))
-        .map(checkbox => checkbox.value);
     
     // Get selected Locations (by index)
     const selectedLocationIndices = Array.from(document.querySelectorAll('.location-checkbox:checked'))
@@ -1073,9 +1354,7 @@ async function getForecast() {
     }
     
     // Get form values
-    const creativeSize = document.getElementById('creativeSize').value;
-    const deviceCategory = document.getElementById('deviceCategory').value;
-    const targetGender = document.getElementById('targetGender').value;
+    const { creativeSize, deviceCategory, targetGender } = getSelectedValues();
     const targetAge = Array.from(document.querySelectorAll('.age-checkbox:checked'))
         .map(checkbox => checkbox.value);
     const duration = parseInt(document.getElementById('duration').value);
@@ -1090,7 +1369,6 @@ async function getForecast() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                cohorts: selectedCohorts,
                 locations: selectedLocations,
                 preset: selectedPresets,
                 creative_size: creativeSize,
@@ -1140,7 +1418,6 @@ function displayForecastResults(forecastData) {
         for (const [preset, locations] of Object.entries(forecastData)) {
             const presetSection = document.createElement('div');
             presetSection.className = 'preset-section';
-            
             const presetTitle = document.createElement('div');
             presetTitle.className = 'preset-title';
             presetTitle.textContent = preset;
@@ -1225,7 +1502,7 @@ async function createPresentation() {
                 email_body: document.getElementById('body').value,
                 abvrs: selectedAbvrs.join(','),
                 forecast_data: getPresetNameFromForecastResponse(currentForecastData),
-                gender: document.getElementById('targetGender').value,
+                gender: document.querySelector('input[name="targetGender"]:checked').value,
                 age: targetAge,
             })
         });
@@ -1307,18 +1584,9 @@ function generateForecastCsv(forecastData, selectedAbvrs, duration) {
     const csvRows = [];
 
     // Combine abvr data
-    const allAbvrs = [...(currentData.abvrs || []), ...(currentData.left_abvrs || [])];
-    
-    // Add cohort ABVRs to the mix
-    const cohortAbvrs = Object.entries(abvrsSelectedFromCohorts).map(([abvrCode, abvrData]) => ({
-        abvr: abvrCode,
-        name: abvrData.name,
-        description: abvrData.description,
-        similarity: 1.0,
-    }));
-    
-    const allAbvrsWithCohorts = [...allAbvrs, ...cohortAbvrs];
-    const selectedAbvrDetails = allAbvrsWithCohorts.filter(abvr => selectedAbvrs.includes(abvr.abvr));
+    const allAbvrs = [...(currentData.cohort_abvrs || []), ...(currentData.abvrs || []), ...(currentData.left_abvrs || [])];
+
+    const selectedAbvrDetails = allAbvrs.filter(abvr => selectedAbvrs.includes(abvr.abvr));
 
     const forecastRows = [];
 
@@ -1381,6 +1649,7 @@ function generateForecastCsv(forecastData, selectedAbvrs, duration) {
 }
 
 function addNewKeyword() {
+    console.log("currentData before adding keywors: ", currentData);
     const keywordInput = document.getElementById('keywordInput');
     const keywordToAdd = keywordInput.value.trim();
     
@@ -1393,22 +1662,39 @@ function addNewKeyword() {
     if (!currentData.keywords) {
         currentData.keywords = [];
     }
-    
+    const selectedKeywords = Array.from(document.querySelectorAll('.keyword-checkbox:checked')).map(checkbox => checkbox.value);
     // Check if already selected
-    if (currentData.keywords.includes(keywordToAdd)) {
+    let keywords=[]
+    let selected = false, found = false
+    for(const keyword of currentData.keywords){
+        if(keyword.keyword === keywordToAdd){
+            if(selectedKeywords.includes(keyword.keyword)){
+                selected = true;
+            }
+            keyword.checked = true;
+            found = true;
+        } else {
+            keyword.checked = selectedKeywords.includes(keyword.keyword);
+        }
+        keywords.push(keyword);
+    }
+    if (!found) {
+        keywords.push({keyword: keywordToAdd, checked: true});
+    }
+    if (selected) {
         showErrorToast('Already Selected', `Keyword "${keywordToAdd}" is already selected.`);
         return;
     }
     
     // Add the keyword
-    currentData.keywords.push(keywordToAdd);
+    currentData.keywords = keywords;
     
     // Refresh the display
     displayEditableForm(currentData);
     
-    // Re-render chips after form refresh
-    renderIncludedLocationChips();
-    renderExcludedLocationChips();
+    // // Re-render chips after form refresh
+    // renderIncludedLocationChips();
+    // renderExcludedLocationChips();
     
     // Clear the input
     keywordInput.value = '';
@@ -1649,7 +1935,8 @@ function addNewLocation() {
         newLocation = {
             includedLocations: groupChip.groupData.includedLocations,
             excludedLocations: groupChip.groupData.excludedLocations,
-            nameAsId: groupChip.groupData.nameAsId
+            nameAsId: groupChip.groupData.nameAsId,
+            checked: true
         };
     } else {
         // Convert location names to objects with name and id
@@ -1666,7 +1953,8 @@ function addNewLocation() {
         newLocation = {
             includedLocations: includedLocationsFormatted,
             excludedLocations: excludedLocationsFormatted,
-            nameAsId: nameAsId
+            nameAsId: nameAsId,
+            checked: true
         };
     }
     
@@ -1696,43 +1984,6 @@ function addNewLocation() {
     if (nameAsIdInput) nameAsIdInput.value = '';
     
     showSuccessToast('Location Added', 'Location added successfully!');
-}
-
-function addNewPreset() {
-    const presetInput = document.getElementById('presetInput');
-    const presetToAdd = presetInput.value.trim();
-    
-    if (!presetToAdd) {
-        showErrorToast('Missing Preset', 'Please enter a preset to add.');
-        return;
-    }
-    
-    // Initialize preset array if it doesn't exist
-    if (!currentData.preset) {
-        currentData.preset = [];
-    }
-    
-    // Check if already selected
-    if (currentData.preset.includes(presetToAdd)) {
-        showErrorToast('Already Selected', `Preset "${presetToAdd}" is already selected.`);
-        return;
-    }
-    
-    // Add the preset
-    currentData.preset.push(presetToAdd);
-    
-    // Refresh the display
-    displayEditableForm(currentData);
-    
-    // Re-render chips after form refresh
-    renderIncludedLocationChips();
-    renderExcludedLocationChips();
-    
-    // Clear the input
-    presetInput.value = '';
-    
-    // Show success message
-    showSuccessToast('Preset Added', `Added "${presetToAdd}" to the selection.`);
 }
 
 async function getAbvrsFromKeywords() {
@@ -1768,16 +2019,35 @@ async function getAbvrsFromKeywords() {
         
         if (response.ok) {
             // Update the current data with new ABVRs
-            currentData.keywords = data.keywords || [];
-            currentData.abvrs = data.abvrs || [];
-            currentData.left_abvrs = data.left_abvrs || [];
+            const cohortAbvrs = data.cohort_abvrs || [];
+            currentData.cohort_abvrs = cohortAbvrs.map(abvr => ({
+                abvr: abvr.abvr,
+                name: abvr.name,
+                description: abvr.description,
+                similarity: abvr.similarity,
+                checked: true
+            }));
+            currentData.abvrs = (data.abvrs || []).map(abvr => ({
+                abvr: abvr.abvr,
+                name: abvr.name,
+                description: abvr.description,
+                similarity: abvr.similarity,
+                checked: true
+            }));
+            currentData.left_abvrs = (data.left_abvrs || []).map(abvr => ({
+                abvr: abvr.abvr,
+                name: abvr.name,
+                description: abvr.description,
+                similarity: abvr.similarity,
+                checked: false
+            }));
             
             // Refresh the display
             displayEditableForm(currentData);
             
-            // Re-render chips after form refresh
-            renderIncludedLocationChips();
-            renderExcludedLocationChips();
+            // // Re-render chips after form refresh
+            // renderIncludedLocationChips();
+            // renderExcludedLocationChips();
             
             // Show success message
             showSuccessToast('ABVRs Updated', `Updated ABVRs based on ${selectedKeywords.length} selected keywords.`);
@@ -1845,9 +2115,9 @@ async function addSelectedABVR() {
             // Refresh the display
             displayEditableForm(currentData);
             
-            // Re-render chips after form refresh
-            renderIncludedLocationChips();
-            renderExcludedLocationChips();
+            // // Re-render chips after form refresh
+            // renderIncludedLocationChips();
+            // renderExcludedLocationChips();
             
             // Clear the input
             abvrSearchInput.value = '';
@@ -1867,23 +2137,6 @@ async function addSelectedABVR() {
     } finally {
         addSelectedABVRBtn.textContent = originalTextForAddSelectedABVRBtn;
         addSelectedABVRBtn.disabled = false;
-    }
-}
-
-// Function to update age selected display
-function updateAgeSelectedDisplay() {
-    const selectedAges = Array.from(document.querySelectorAll('.age-checkbox:checked'))
-        .map(checkbox => checkbox.value);
-    
-    const displayElement = document.getElementById('ageSelectedDisplay');
-    if (displayElement) {
-        if (selectedAges.length === 0) {
-            displayElement.textContent = 'None';
-        } else if (selectedAges.includes('All')) {
-            displayElement.textContent = 'All Ages';
-        } else {
-            displayElement.textContent = selectedAges.join(', ');
-        }
     }
 }
 
@@ -1907,17 +2160,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    const presetInput = document.getElementById('presetInput');
-    if (presetInput) {
-        presetInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addNewPreset();
-            }
-        });
-    }
-    
     // Add event listeners for age checkboxes
-    const ageCheckboxes = document.querySelectorAll('.age-checkbox');
+    const ageCheckboxes = Array.from(document.querySelectorAll('.age-checkbox'));
     ageCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             // If "All" is selected, uncheck others
@@ -1935,8 +2179,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     allCheckbox.checked = false;
                 }
             }
-            
-            updateAgeSelectedDisplay();
         });
     });
 });
@@ -2318,7 +2560,8 @@ async function saveSingleLocation() {
             currentData.locations.push({
                 includedLocations: [{"name": locationSaved.name, "id": locationSaved.id}],
                 excludedLocations: [],
-                nameAsId: ""
+                nameAsId: "",
+                checked: true
             });
             
             // Refresh the display
@@ -2405,7 +2648,8 @@ async function saveLocationGroup() {
                 currentData.locations.push({
                     includedLocations: included,
                     excludedLocations: excluded,
-                    nameAsId: name
+                    nameAsId: name,
+                    checked: true
                 });
                 removeLocationFromNotFoundList(name);
             }

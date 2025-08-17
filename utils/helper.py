@@ -112,9 +112,8 @@ def parse_locations_dict(locations: List[Dict[str, Any]]) -> Tuple[List[Dict[str
     ]
     """
     parsed_locations = []
-    locations_not_found=[]
+    locations_not_found=set()
     location_groups=get_location_groups()
-    logger.info(f"location_groups: {location_groups}")
     for location in locations:
         if len(location["excludedLocations"])==0 and len(location["includedLocations"])>=1:
             included_locations=[]
@@ -141,7 +140,7 @@ def parse_locations_dict(locations: List[Dict[str, Any]]) -> Tuple[List[Dict[str
                     parsed_locations.append(location_group_details)
                 else:
                     logger.info(f"No location or location group matches found for {possible_location}")
-                    locations_not_found.append(possible_location)
+                    locations_not_found.add(possible_location)
         elif len(location["includedLocations"])==0 and len(location["excludedLocations"])==0:
             parsed_locations.append({
                 "includedLocations": [],
@@ -178,8 +177,20 @@ def parse_locations_dict(locations: List[Dict[str, Any]]) -> Tuple[List[Dict[str
                     "nameAsId": location["nameAsId"]
                 })
             else:
-                locations_not_found.append(location)
-    return parsed_locations,locations_not_found
+                locations_not_found.add(location)
+    final_parsed_locations=[]
+    visited_locations=set()
+    for location in parsed_locations:
+        if location["nameAsId"] and location["nameAsId"] not in visited_locations:
+            final_parsed_locations.append(location)
+            visited_locations.add(location["nameAsId"])
+        elif len(location["includedLocations"])==1 and len(location["excludedLocations"])==0 and location["includedLocations"][0]["name"] not in visited_locations:
+            final_parsed_locations.append(location)
+            visited_locations.add(location["includedLocations"][0]["name"])
+            
+    logger.info(f"final_parsed_locations: {final_parsed_locations}")
+    logger.info(f"locations_not_found: {locations_not_found}")
+    return final_parsed_locations, list(locations_not_found)
 
 def simplify_locations(locations):
     simplified = []

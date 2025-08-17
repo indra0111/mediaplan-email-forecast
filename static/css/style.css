@@ -262,10 +262,10 @@ tr:hover {
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
 }
 .search-dropdown {
-    position: absolute;
+    /* position: absolute;
     top: 100%;
     left: 0;
-    right: 0;
+    right: 0; */
     background: white;
     border: 1px solid #ddd;
     border-top: none;
@@ -656,90 +656,203 @@ tr:hover {
 }
 
 /* Age Selector Styling */
-.age-selector-container {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    background-color: #fafafa;
-    transition: border-color 0.3s ease;
-}
-
-.age-selector-container:hover {
-    border-color: #007bff;
-}
+/* Enhanced styling for Target Age checkboxes to match radio buttons */
 
 .age-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
     margin-bottom: 15px;
 }
 
 .age-option {
+    position: relative;
     display: flex;
     align-items: center;
-    padding: 8px 12px;
-    background-color: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
+    /* min-height: 60px; */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.age-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
 }
 
 .age-option:hover {
-    background-color: #f8f9fa;
-    border-color: #007bff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px);
+    border-color: #4CAF50;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+}
+
+.age-option:hover::before {
+    opacity: 0.05;
 }
 
 .age-option input[type="checkbox"] {
-    margin-right: 8px;
-    width: 16px;
-    height: 16px;
-    accent-color: #007bff;
+    position: relative;
+    z-index: 1;
+    margin-right: 14px;
+    width: 18px;
+    height: 18px;
+    accent-color: #4CAF50;
+    cursor: pointer;
+    transform: scale(1.1);
+    transition: all 0.3s ease;
 }
 
 .age-label {
+    position: relative;
+    z-index: 1;
     font-size: 14px;
-    font-weight: 500;
-    color: #333;
-}
-
-.age-option:has(input:checked) {
-    background-color: #e3f2fd;
-    border-color: #007bff;
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
-}
-
-.age-option:has(input:checked) .age-label {
-    color: #007bff;
     font-weight: 600;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+    flex: 1;
 }
 
+/* Selected state styling */
+.age-option input[type="checkbox"]:checked + .age-label {
+    color: #2e7d32;
+    font-weight: 700;
+    transform: scale(1.02);
+}
+
+.age-option input[type="checkbox"]:checked {
+    transform: scale(1.2);
+}
+
+/* Enhanced selected state for the entire option */
+.age-option:has(input[type="checkbox"]:checked) {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-color: #4CAF50;
+    border-width: 2px;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
+    transform: translateY(-1px);
+}
+
+.age-option:has(input[type="checkbox"]:checked)::before {
+    opacity: 0.1;
+}
+
+/* Special styling for "All" option */
+.age-option:has(input[value="All"]:checked) {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #2196F3;
+}
+
+.age-option:has(input[value="All"]:checked)::before {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    opacity: 0.1;
+}
+
+/* Focus state for accessibility */
+.age-option:focus-within {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Animation for checkbox selection */
+.age-option input[type="checkbox"]:checked + .age-label::after {
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 18px;
+    animation: ageCheckmark 0.3s ease-in-out;
+}
+
+@keyframes ageCheckmark {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%) scale(0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(1.2);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+/* Hover effect for checkbox itself */
+.age-option:hover input[type="checkbox"] {
+    transform: scale(1.15);
+}
+
+/* Enhanced age selected display */
 .age-selected-display {
-    padding: 10px;
-    background-color: white;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    font-size: 14px;
+    padding: 16px;
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-radius: 10px;
+    border: 2px solid #4CAF50;
+    font-size: 15px;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+    transition: all 0.3s ease;
+}
+
+.age-selected-display:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
 }
 
 .age-selected-label {
-    font-weight: 600;
-    color: #666;
+    font-weight: 700;
+    color: #2e7d32;
+    margin-right: 8px;
 }
 
 .age-selected-text {
-    color: #007bff;
-    font-weight: 500;
+    color: #1b5e20;
+    font-weight: 600;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
 }
 
 /* Responsive design for age selector */
 @media (max-width: 768px) {
     .age-options {
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .age-option {
+        padding: 12px 16px;
+        min-height: 55px;
+    }
+    
+    .age-label {
+        font-size: 14px;
+    }
+    
+    .age-option input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
     }
 }
 
@@ -747,6 +860,36 @@ tr:hover {
     .age-options {
         grid-template-columns: 1fr;
     }
+    
+    .age-option {
+        padding: 14px 18px;
+        min-height: 60px;
+    }
+}
+
+/* Special hover effects for different age ranges */
+.age-option:has(input[value="18-24"]:hover) {
+    border-color: #FF5722;
+}
+
+.age-option:has(input[value="25-34"]:hover) {
+    border-color: #FF9800;
+}
+
+.age-option:has(input[value="35-44"]:hover) {
+    border-color: #FFC107;
+}
+
+.age-option:has(input[value="45-54"]:hover) {
+    border-color: #8BC34A;
+}
+
+.age-option:has(input[value="55+"]:hover) {
+    border-color: #9C27B0;
+}
+
+.age-option:has(input[value="All"]:hover) {
+    border-color: #2196F3;
 }
 
 /* Toast Notification System */
@@ -1144,4 +1287,298 @@ tr:hover {
 
 .single-location-chip .chip:hover {
     background-color: #1976D2;
+}
+
+/* Replace your existing radio button CSS with this enhanced version */
+
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.radio-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    min-width: 120px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.radio-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.radio-option:hover {
+    transform: translateY(-2px);
+    border-color: #4CAF50;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+}
+
+.radio-option:hover::before {
+    opacity: 0.05;
+}
+
+.radio-option input[type="radio"] {
+    position: relative;
+    z-index: 1;
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    accent-color: #4CAF50;
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.radio-label {
+    position: relative;
+    z-index: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+}
+
+/* Selected state styling */
+.radio-option input[type="radio"]:checked + .radio-label {
+    color: #2e7d32;
+    font-weight: 700;
+    transform: scale(1.02);
+}
+
+.radio-option input[type="radio"]:checked {
+    transform: scale(1.2);
+}
+
+/* Enhanced selected state for the entire option */
+.radio-option:has(input[type="radio"]:checked) {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-color: #4CAF50;
+    border-width: 2px;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
+    transform: translateY(-1px);
+}
+
+.radio-option:has(input[type="radio"]:checked)::before {
+    opacity: 0.1;
+}
+
+/* Focus state for accessibility */
+.radio-option:focus-within {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Animation for radio button selection */
+.radio-option input[type="radio"]:checked + .radio-label::after {
+    /* content: '✓'; */
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 16px;
+    animation: checkmark 0.3s ease-in-out;
+}
+
+@keyframes checkmark {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%) scale(0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(1.2);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+/* Hover effect for radio button itself */
+.radio-option:hover input[type="radio"] {
+    transform: scale(1.15);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .radio-group {
+        gap: 8px;
+    }
+    
+    .radio-option {
+        padding: 10px 14px;
+        min-width: 100px;
+    }
+    
+    .radio-label {
+        font-size: 13px;
+    }
+}
+
+/* Special styling for different categories */
+.radio-group[data-category="creative"] .radio-option:has(input:checked) {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #2196F3;
+}
+
+.radio-group[data-category="device"] .radio-option:has(input:checked) {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-color: #FF9800;
+}
+
+.radio-group[data-category="gender"] .radio-option:has(input:checked) {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+    border-color: #E91E63;
+}
+
+/* Enhanced duration styling that follows proper form structure */
+
+.duration-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    min-height: 60px;
+}
+
+.duration-input-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.duration-input-wrapper:hover {
+    transform: translateY(-2px);
+    border-color: #4CAF50;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+}
+
+.duration-input-wrapper:hover::before {
+    opacity: 0.05;
+}
+
+.duration-input-wrapper:focus-within {
+    border-color: #4CAF50;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
+    transform: translateY(-1px);
+}
+
+.duration-input-wrapper:focus-within::before {
+    opacity: 0.1;
+}
+
+.duration-input-wrapper input[type="number"] {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    max-width: 120px;
+    padding: 10px 14px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.duration-input-wrapper input[type="number"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    transform: scale(1.02);
+}
+
+.duration-input-wrapper input[type="number"]:hover {
+    border-color: #4CAF50;
+    transform: scale(1.01);
+}
+
+.duration-suffix {
+    position: relative;
+    z-index: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-left: 15px;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .duration-input-wrapper {
+        padding: 12px 16px;
+        min-height: 55px;
+    }
+    
+    .duration-input-wrapper input[type="number"] {
+        padding: 8px 12px;
+        font-size: 14px;
+        max-width: 100px;
+    }
+    
+    .duration-suffix {
+        font-size: 14px;
+        margin-left: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .duration-input-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 16px 18px;
+        min-height: 80px;
+    }
+    
+    .duration-input-wrapper input[type="number"] {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .duration-suffix {
+        margin-left: 0;
+        align-self: flex-end;
+    }
 }

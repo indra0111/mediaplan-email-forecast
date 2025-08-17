@@ -157,17 +157,17 @@ def get_top_matches(email_embedding, data, top_k=5):
     sorted_results = sorted(results, key=lambda x: x["similarity"], reverse=True)
     return sorted_results[:top_k]
 
-def find_relevant_entries(targeting_themes, table_data):
+def find_relevant_entries(targeting_themes, audience_data):
     """
     Enhanced function to find relevant audience entries with caching
     """
     logger.info(f"Finding relevant entries for {targeting_themes}")
     # Step 1: Filter and clean data
-    filtered_data = filter_and_clean_audience_data(table_data)
-    logger.info(f"Filtered data: {len(filtered_data)}")
+    filtered_audience_data = filter_and_clean_audience_data(audience_data)
+    logger.info(f"Filtered data: {len(filtered_audience_data)}")
     # Step 2: Get embeddings from cache or compute them
-    precomputed = get_cached_or_compute_embeddings(filtered_data)
-    
+    precomputed_audience_data = get_cached_or_compute_embeddings(filtered_audience_data)
+    logger.info(f"Precomputed data: {len(precomputed_audience_data)}")
     # Step 3: Create email embedding
     email_embedding = embed_email(targeting_themes)
     if email_embedding is None:
@@ -175,13 +175,10 @@ def find_relevant_entries(targeting_themes, table_data):
         return []
     
     # Step 4: Find top matches
-    top_entries = get_top_matches(email_embedding, precomputed, top_k=200)
-    # Step 5: Filter by minimum similarity threshold
-    threshold = 0.3  # Adjust this threshold based on your data
-    filtered_entries = [entry for entry in top_entries if entry["similarity"] > threshold]
-    
-    logger.info(f"Found {len(filtered_entries)} entries above similarity threshold {threshold}")
-    return filtered_entries
+    top_entries = get_top_matches(email_embedding, precomputed_audience_data, top_k=200)
+    final_entries = [{'abvr': entry['abvr'], 'name': entry['name'], 'description': entry['description'], 'similarity': entry['similarity']} for entry in top_entries]
+    logger.info(f"Found {len(top_entries)} entries")
+    return final_entries
 
 def get_abvrs_from_cohorts(cohorts=None):
     """
@@ -242,16 +239,18 @@ def get_filtered_audience_data(cohorts=None) -> Optional[List[Dict[str, Any]]]:
                 or entry.get('audience_name', '').startswith('Interest |')
             )
         ]
-        abvrs = get_abvrs_from_cohorts(cohorts)
-        logger.info(f"Abvrs from cohorts: {abvrs}")
+        cohort_abvrs = get_abvrs_from_cohorts(cohorts)
+        logger.info(f"Abvrs from cohorts: {cohort_abvrs}")
         logger.info(f"Filtered entry before abvrs: {len(filtered_entry)}")
-        filtered_entry = [entry for entry in filtered_entry if entry['abvr'] not in abvrs]
+        filtered_cohort_entry = [entry for entry in filtered_entry if entry['abvr'] in cohort_abvrs]
+        logger.info(f"Filtered cohort entry before abvrs: {len(filtered_cohort_entry)}")
+        filtered_entry = [entry for entry in filtered_entry if entry['abvr'] not in cohort_abvrs]
         logger.info(f"Filtered entry after abvrs: {len(filtered_entry)}")
-        return filtered_entry
+        return filtered_entry,filtered_cohort_entry
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        return None
+        return None,None
 
 def get_selected_audience_data_by_abvrs(abvrs="") -> Optional[List[Dict[str, Any]]]:
     """
@@ -431,7 +430,8 @@ def refresh_audience_embeddings():
     Refresh audience embeddings
     """
     audience_data = get_filtered_audience_data()
-    force_recompute_embeddings(audience_data)
+    audience_embeddings = force_recompute_embeddings(audience_data)
+    return audience_embeddings
 
 def load_embeddings_from_csv(csv_path="audience_embeddings.csv"):
     """
@@ -510,16 +510,9 @@ def get_cached_or_compute_embeddings(audience_data, cache_file="audience_embeddi
     # Try to load from cache first
     cached_data = load_embeddings_from_csv(cache_file)
     
-    if cached_data is not None:
-        logger.info("✅ Using cached embeddings")
-        return cached_data
-    
-    # Compute embeddings if cache is not available or invalid
-    logger.info("🔄 Computing embeddings (this may take a while)...")
-    computed_data = precompute_embeddings(audience_data)
-    
-    # Save to cache for future use
-    logger.info("💾 Saving embeddings to cache...")
-    save_embeddings_to_csv(computed_data, cache_file)
-    
-    return computed_data
+    if cached_data is None:
+        cached_data = refresh_audience_embeddings()
+        
+    audience_abvrs = [entry['abvr'] for entry in audience_data]
+    selected_cached_data = [entry for entry in cached_data if entry['abvr'] in audience_abvrs]
+    return selected_cached_data

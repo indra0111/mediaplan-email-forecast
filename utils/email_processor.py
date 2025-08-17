@@ -221,7 +221,7 @@ def process_top_k_selected_audiences(top_k_selected_audiences, keywords):
     return selected_audiences, left_audiences
 
 def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
-    all_audience_data = get_filtered_audience_data(cohorts)
+    all_audience_data, cohort_audience_data = get_filtered_audience_data(cohorts)
 
     if not all_audience_data:
         logger.info("Error: Could not retrieve audience data from database")
@@ -246,14 +246,30 @@ def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
     # Find relevant entries (will use cache if available)
     logger.info(f"\nFinding relevant entries...")
     results = find_relevant_entries(keywords_array, all_audience_data)
+    sorted_cohort_entries = find_relevant_entries(keywords_array, cohort_audience_data)
     logger.info(f"Results: {len(results)}")
     if not results:
         logger.info("Warning: No relevant entries found")
     else:
         selected_audiences, left_audiences = process_top_k_selected_audiences(results, keywords_array)
-        return keywords_array, selected_audiences, left_audiences
+        return keywords_array, sorted_cohort_entries, selected_audiences, left_audiences
     
-    return None, None, None
+    return None, None, None, None
+
+def update_audiences_using_added_cohort(cohorts=[], keywords_array=None):
+    all_audience_data, cohort_audience_data = get_filtered_audience_data(cohorts)
+
+    if not all_audience_data:
+        logger.info("Error: Could not retrieve audience data from database")
+        exit(1)
+
+    logger.info(f"Loaded {len(all_audience_data)} audience entries")
+
+    # Find relevant entries (will use cache if available)
+    logger.info(f"\nFinding relevant entries...")
+    sorted_cohort_entries = find_relevant_entries(keywords_array, cohort_audience_data)
+    logger.info(f"Results: {len(sorted_cohort_entries)}")
+    return sorted_cohort_entries
 
 
 def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
@@ -309,7 +325,7 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     duration = response['duration']
     target_gender = response['target_gender']
     target_age = response['target_age']
-    keywords, auds, left_auds=get_abvrs(subject, body, valid_cohort_list, None)
+    keywords, sorted_cohort_entries, auds, left_auds=get_abvrs(subject, body, valid_cohort_list, None)
     return {
         "cohort": valid_cohort_list,
         "locations": locations,  # Use separately extracted locations
@@ -318,11 +334,12 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
         "creative_size": creative_size,
         "device_category": device_category + " Devices",
         "duration": str(duration) + " Days",
+        "cohort_abvrs": sorted_cohort_entries,
         "abvrs": auds,
         "left_abvrs": left_auds,
         "keywords": keywords,
-        "target_gender": target_gender,
-        "target_age": target_age
+        "target_gender": target_gender if target_gender else "All",
+        "target_age": target_age if target_age else ["All"]
     }
     
 def get_location_response(subject: str, body: str) -> dict:
