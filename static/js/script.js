@@ -4,6 +4,8 @@ let availableLocations = []; // Store all available locations for searching
 let availableLocationGroups = {}; // Store all available location groups for searching
 let selectedCohortFromDropdown = null;
 let selectedPresetFromDropdown = null;
+let selectedAudienceSegmentFromDropdown = null;
+let audienceSegmentFromDropdown = [];
 let selectedIncludedLocationFromDropdown = null;
 let selectedExcludedLocationFromDropdown = null;
 let highlightedIndex = -1;
@@ -741,8 +743,6 @@ function selectPresetFromDropdown(preset) {
 }
 
 function selectIncludedLocationFromDropdown(option) {
-    console.log("option in selectIncludedLocationFromDropdown", option);
-    
     // If group, clear chips and disable excluded, set nameAsId
     if (option.type === 'group') {
         // Use the group data to create the proper location object
@@ -958,7 +958,6 @@ async function addSelectedPreset() {
 }
 
 function displayEditableForm(data) {
-    console.log("data in displayEditableForm", data);
     // Display Cohorts with checkboxes and "Select All" option
     const cohortsContainer = document.getElementById('cohortsContainer');
     cohortsContainer.innerHTML = `
@@ -977,7 +976,6 @@ function displayEditableForm(data) {
     // Display Locations with checkboxes and "Select All" option
     const locationsContainer = document.getElementById('locationsContainer');
     const locations = data.locations || [];
-    console.log("locations in displayEditableForm", locations);
     locationsContainer.innerHTML = `
         <div class="location-select-all">
             <input type="checkbox" id="selectAllLocations" ${locations.every(location => location.checked) ? 'checked' : ''}>
@@ -1094,8 +1092,8 @@ function displayEditableForm(data) {
     const cohortAbvrs = data.cohort_abvrs || [];
     const model_selected_abvrs = data.abvrs || [];
     const left_abvrs = data.left_abvrs || [];
-    console.log(`cohortAbvrs: `, cohortAbvrs);
     abvrsContainer.innerHTML = `
+        <div id="abvrChipsContainer" class="abvr-chips-container" style="display: none;"></div>
         <div class="abvr-select-all">
             <input type="checkbox" id="selectAllAbvrs">
             <label for="selectAllAbvrs"><strong>Select All ABVRs</strong></label>
@@ -1160,6 +1158,7 @@ function displayEditableForm(data) {
     // Setup cohort search functionality
     setupCohortSearch();
     setupPresetSearch();
+    setupABVRSearch();
 }
 
 function setupSelectAllCheckbox(selectAllId, checkboxClass) {
@@ -1220,7 +1219,6 @@ function updatePresetCheckedStatus(presetName, isChecked) {
     const preset = currentData.preset.find(p => p.name === presetName);
     if (preset) {
         preset.checked = isChecked;
-        console.log(`Updated preset ${presetName} checked status to: ${isChecked}`);
     }
 }
 
@@ -1649,7 +1647,6 @@ function generateForecastCsv(forecastData, selectedAbvrs, duration) {
 }
 
 function addNewKeyword() {
-    console.log("currentData before adding keywors: ", currentData);
     const keywordInput = document.getElementById('keywordInput');
     const keywordToAdd = keywordInput.value.trim();
     
@@ -2064,79 +2061,331 @@ async function getAbvrsFromKeywords() {
     }
 }
 
-async function addSelectedABVR() {
+async function fetchAudienceSegmentsByName() {
     const abvrSearchInput = document.getElementById('abvrSearch');
     const abvrsToAdd = abvrSearchInput.value.trim();
-    
     if (!abvrsToAdd) {
-        showErrorToast('Missing ABVRs', 'Please enter ABVRs to add (comma-separated).');
-        return;
+        return [];
     }
-    
-    const addSelectedABVRBtn = document.getElementById('addSelectedABVRBtn');
-    const originalTextForAddSelectedABVRBtn = addSelectedABVRBtn.textContent;
-    addSelectedABVRBtn.textContent = 'Adding ABVRs...';
-    addSelectedABVRBtn.disabled = true;
-    
-    try {
-        const response = await fetch('/get-audience-segment-by-abvrs', {
+    const selectedKeywords = Array.from(document.querySelectorAll('.keyword-checkbox:checked')).map(checkbox => checkbox.value);
+    try{
+        const response = await fetch(`/get-audience-segment-by-name`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ abvrs: abvrsToAdd })
+            body: JSON.stringify({ name: abvrsToAdd, keywords: selectedKeywords })
         });
-        
         const data = await response.json();
-        
-        if (response.ok) {
-            // Add the new ABVRs to the left_abvrs section
-            if (!currentData.left_abvrs) {
-                currentData.left_abvrs = [];
-            }
-            
-            // Check for duplicates and add new ones
-            let addedCount = 0;
-            let abvrsToRemove = [];
-            data.forEach(newAbvr => {
-                const isDuplicateDefaultSelected = currentData.abvrs.some(existing => existing.abvr === newAbvr.abvr);
-                const existingInLeftAbvrs = currentData.left_abvrs.find(existing => existing.abvr === newAbvr.abvr);
-                
-                if (!isDuplicateDefaultSelected && !existingInLeftAbvrs) {
-                    currentData.abvrs.push(newAbvr);
-                    addedCount++;
-                } else if (existingInLeftAbvrs) {
-                    currentData.abvrs.push(existingInLeftAbvrs);
-                    abvrsToRemove.push(existingInLeftAbvrs.abvr);
-                    addedCount++;
-                }
-            });
-            currentData.left_abvrs = currentData.left_abvrs.filter(abvr => !abvrsToRemove.includes(abvr.abvr));
-            // Refresh the display
-            displayEditableForm(currentData);
-            
-            // // Re-render chips after form refresh
-            // renderIncludedLocationChips();
-            // renderExcludedLocationChips();
-            
-            // Clear the input
-            abvrSearchInput.value = '';
-            
-            // Show success message
-            if (addedCount > 0) {
-                showSuccessToast('ABVRs Added', `Added ${addedCount} new audience segment(s) to the selection.`);
-            } else {
-                showSuccessToast('No New ABVRs', 'All ABVRs are already in the selection.');
-            }
-        } else {
-            showErrorToast('ABVR Error', data.detail || 'An error occurred while getting audience segments.');
-        }
+        return data;
     } catch (err) {
         console.error('Error details:', err);
-        showErrorToast('ABVR Error', 'An error occurred while getting audience segments: ' + err.message);
-    } finally {
-        addSelectedABVRBtn.textContent = originalTextForAddSelectedABVRBtn;
-        addSelectedABVRBtn.disabled = false;
+        return [];
+    }
+}
+
+function setupABVRSearch() {
+    const searchInput = document.getElementById('abvrSearch');
+    const dropdown = document.getElementById('abvrSearchDropdown');
+    if (!searchInput || !dropdown) return;
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        clearTimeout(searchTimeout);
+        
+        // If user is typing, search for new results
+        if (searchTerm.length > 0) {
+            searchTimeout = setTimeout(async () => {
+                const results = await fetchAudienceSegmentsByName();
+                audienceSegmentFromDropdown = results;
+                showABVRDropdown();
+            }, 300);
+        } else {
+            // If input is cleared, show dropdown with current selections
+            if (selectedAudienceSegmentFromDropdown && selectedAudienceSegmentFromDropdown.length > 0) {
+                // Keep the dropdown open to show current selections
+                updateABVRDropdownSelection();
+            } else {
+                hideABVRDropdown();
+            }
+        }
+    });
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSelectedABVR();
+        } else if (e.key === 'Escape') {
+            hideABVRDropdown();
+        }
+    });
+    
+    // Add a clear button or way to clear multiple selections
+    searchInput.addEventListener('focus', function() {
+        if (selectedAudienceSegmentFromDropdown && selectedAudienceSegmentFromDropdown.length > 0) {
+            // Show a hint that multiple items are selected
+            this.placeholder = `${selectedAudienceSegmentFromDropdown.length} item(s) selected. Press Enter to add all.`;
+        }
+        showABVRDropdown();
+    });
+    // FIXED: Add proper click outside detection that doesn't interfere with dropdown clicks
+    document.addEventListener('click', function(e) {
+        // Check if click is outside both the search input and dropdown
+        const isOutsideSearch = !searchInput.contains(e.target);
+        const isOutsideDropdown = !dropdown.contains(e.target);
+        
+        // Only hide if click is outside both elements
+        if (isOutsideSearch && isOutsideDropdown) {
+            hideABVRDropdown();
+            searchInput.placeholder = 'Search for audience segments by name...';
+        }
+    });
+}
+
+function showABVRDropdown() {
+    const dropdown = document.getElementById('abvrSearchDropdown');
+    if (!dropdown) return;
+    if (audienceSegmentFromDropdown.length === 0) {
+        dropdown.innerHTML = '<div class="no-results">No matching audience segments found</div>';
+    } else {
+        dropdown.innerHTML = audienceSegmentFromDropdown.map((abvr, idx) => {
+            // Check if this ABVR is already selected
+            const isSelected = selectedAudienceSegmentFromDropdown && 
+                selectedAudienceSegmentFromDropdown.some(selected => selected.abvr === abvr.abvr);
+            
+            const selectedClass = isSelected ? 'selected' : '';
+            const checkmark = isSelected ? ' ✓' : '';
+            
+            return `
+                <div class="search-dropdown-item ${selectedClass}" data-idx="${idx}">
+                    <div class="abvr-dropdown-name">${abvr.name}${checkmark}</div>
+                    <div class="abvr-dropdown-description">${abvr.description}</div>
+                    <div class="abvr-dropdown-similarity">${(abvr.similarity * 100).toFixed(1)}%</div>
+                    <div class="abvr-dropdown-code">ABVR: ${abvr.abvr}</div>
+                </div>
+            `;
+        }).join('');
+        const items = dropdown.querySelectorAll('.search-dropdown-item');
+        items.forEach((item, idx) => {
+            item.addEventListener('click', function(e) {
+                // Prevent event bubbling to parent elements
+                e.preventDefault();
+                e.stopPropagation();
+                selectABVRFromDropdown(audienceSegmentFromDropdown[idx]);
+            });
+        });
+    }
+    
+    // Store results for reference
+    dropdown._searchResults = audienceSegmentFromDropdown;
+    dropdown.style.display = 'block';
+}
+
+function hideABVRDropdown() {
+    const dropdown = document.getElementById('abvrSearchDropdown');
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+}
+
+function selectABVRFromDropdown(selectedABVR) {
+    if (!selectedAudienceSegmentFromDropdown) {
+        selectedAudienceSegmentFromDropdown = [];
+    }
+    
+    // Check if already selected
+    const isAlreadySelected = selectedAudienceSegmentFromDropdown.some(
+        item => item.abvr === selectedABVR.abvr
+    );
+    
+    if (!isAlreadySelected) {
+        selectedAudienceSegmentFromDropdown.push(selectedABVR);
+        
+        // Show success message
+        showSuccessToast('Audience Segment Added', `Added "${selectedABVR.name}" to selection.`);
+    } else {
+        // Remove if already selected (toggle behavior)
+        selectedAudienceSegmentFromDropdown = selectedAudienceSegmentFromDropdown.filter(
+            item => item.abvr !== selectedABVR.abvr
+        );
+        
+        showInfoToast('Audience Segment Removed', `Removed "${selectedABVR.name}" from selection.`);
+    }
+    
+    // // Hide the dropdown after selection
+    // hideABVRDropdown();
+    
+    // Update dropdown to show selection state
+    updateABVRDropdownSelection();
+    
+    // Render the chips
+    renderABVRChips();
+    
+    // Keep the search input focused so user can continue selecting
+    const searchInput = document.getElementById('abvrSearch');
+    if (searchInput) {
+        searchInput.focus();
+    }
+}
+
+// Add this new function to render ABVR chips
+function renderABVRChips() {
+    const container = document.getElementById('abvrChipsContainer');
+    if (!container) return;
+    
+    if (!selectedAudienceSegmentFromDropdown || selectedAudienceSegmentFromDropdown.length === 0) {
+        // Hide the container when no items are selected
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+    
+    // Show the container when items are selected
+    container.style.display = 'block';
+    
+    container.innerHTML = `
+        <div class="abvr-chips-label">Selected Audience Segments:</div>
+        <div class="abvr-chips-list">
+            ${selectedAudienceSegmentFromDropdown.map((abvr, idx) => `
+                <span class="abvr-chip">
+                    <span class="abvr-chip-name">${abvr.name}</span>
+                    <span class="abvr-chip-similarity">${(abvr.similarity * 100).toFixed(1)}%</span>
+                    <button class="remove-abvr-chip" onclick="removeABVRChip(${idx})">&times;</button>
+                </span>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Add function to remove individual ABVR chips
+function removeABVRChip(index) {
+    if (selectedAudienceSegmentFromDropdown && selectedAudienceSegmentFromDropdown[index]) {
+        const removedABVR = selectedAudienceSegmentFromDropdown[index];
+        selectedAudienceSegmentFromDropdown.splice(index, 1);
+        
+        // Update dropdown selection state
+        updateABVRDropdownSelection();
+        
+        // Re-render chips
+        renderABVRChips();
+        
+        showInfoToast('Audience Segment Removed', `Removed "${removedABVR.name}" from selection.`);
+    }
+}
+
+// Update the updateABVRDropdownSelection function to handle chips
+function updateABVRDropdownSelection() {
+    const dropdown = document.getElementById('abvrSearchDropdown');
+    if (!dropdown || !dropdown._searchResults) return;
+    
+    const items = dropdown.querySelectorAll('.search-dropdown-item');
+    items.forEach((item, idx) => {
+        const abvr = dropdown._searchResults[idx];
+        const isSelected = selectedAudienceSegmentFromDropdown && 
+            selectedAudienceSegmentFromDropdown.some(selected => selected.abvr === abvr.abvr);
+        
+        if (isSelected) {
+            item.classList.add('selected');
+            item.innerHTML = `
+                <div class="abvr-dropdown-name">${abvr.name} ✓</div>
+                <div class="abvr-dropdown-description">${abvr.description}</div>
+                <div class="abvr-dropdown-similarity">${(abvr.similarity * 100).toFixed(1)}%</div>
+                <div class="abvr-dropdown-code">ABVR: ${abvr.abvr}</div>
+            `;
+        } else {
+            item.classList.remove('selected');
+            item.innerHTML = `
+                <div class="abvr-dropdown-name">${abvr.name}</div>
+                <div class="abvr-dropdown-description">${abvr.description}</div>
+                <div class="abvr-dropdown-similarity">${(abvr.similarity * 100).toFixed(1)}%</div>
+                <div class="abvr-dropdown-code">ABVR: ${abvr.abvr}</div>
+            `;
+        }
+    });
+}
+
+async function addSelectedABVR() {
+    if (!selectedAudienceSegmentFromDropdown || selectedAudienceSegmentFromDropdown.length === 0) {
+        showErrorToast(
+            'No Audience Segments Selected',
+            'Please choose at least one audience segment from the dropdown before adding.'
+        );
+        return;
+    }
+
+    // Normalize to array
+    const selection = Array.isArray(selectedAudienceSegmentFromDropdown)
+        ? selectedAudienceSegmentFromDropdown
+        : [selectedAudienceSegmentFromDropdown];
+
+    // Collect all existing abvrs across groups
+    const cohort_abvrs = (currentData.cohort_abvrs || []).map(a => a.abvr);
+    const abvrs = (currentData.abvrs || []).map(a => a.abvr);
+    const left_abvrs = (currentData.left_abvrs || []).map(a => a.abvr);
+    const all_abvrs = new Set([...cohort_abvrs, ...abvrs, ...left_abvrs]);
+
+    const selected_abvrs = selection.map(a => a.abvr);
+
+    // Find which ones are actually new
+    const new_abvrs = selection.filter(a => !all_abvrs.has(a.abvr));
+    const already_selected = selection.filter(a => all_abvrs.has(a.abvr));
+
+    // Update left_abvrs with new items
+    let updated_left_abvrs = [
+        ...(currentData.left_abvrs || []),
+        ...new_abvrs.map(a => ({
+            abvr: a.abvr,
+            name: a.name,
+            description: a.description,
+            similarity: a.similarity,
+            checked: true
+        }))
+    ];
+
+    // Update "checked" status in cohort_abvrs and abvrs
+    const markChecked = (arr) =>
+        arr.map(a =>
+            selected_abvrs.includes(a.abvr) && !a.checked
+                ? { ...a, checked: true }
+                : a
+        );
+
+    currentData.cohort_abvrs = markChecked(currentData.cohort_abvrs || []);
+    currentData.abvrs = markChecked(currentData.abvrs || []);
+
+    // Sort by similarity descending
+    updated_left_abvrs.sort((a, b) => b.similarity - a.similarity);
+    currentData.left_abvrs = updated_left_abvrs;
+
+    // Refresh UI
+    displayEditableForm(currentData);
+
+    // Reset dropdown & search
+    selectedAudienceSegmentFromDropdown = [];
+    const abvrSearchInput = document.getElementById('abvrSearch');
+    if (abvrSearchInput) abvrSearchInput.value = '';
+
+    // Clear the chips
+    renderABVRChips();
+
+    // Close dropdown
+    hideABVRDropdown();
+
+    // Toast message
+    if (new_abvrs.length > 0 && already_selected.length > 0) {
+        showSuccessToast(
+            'Audience Segments Updated',
+            `Added ${new_abvrs.length} new segment(s). ${already_selected.length} were already selected.`
+        );
+    } else if (new_abvrs.length > 0) {
+        showSuccessToast(
+            'Audience Segments Added',
+            `Added ${new_abvrs.length} new segment(s) successfully.`
+        );
+    } else {
+        showInfoToast(
+            'No New Segments',
+            'All selected audience segments were already part of your list.'
+        );
     }
 }
 
@@ -2251,8 +2500,6 @@ function toggleLocationMode() {
     const saveButton = document.getElementById('modalSaveButton');
     const toggleText = document.querySelector('.toggle-text');
     
-    console.log('toggleLocationMode called, toggle.checked:', toggle.checked);
-    
     if (toggle.checked) {
         // Single location mode
         singleSection.style.display = 'block';
@@ -2260,7 +2507,6 @@ function toggleLocationMode() {
         modalTitle.textContent = 'Add Single Location to Database';
         saveButton.textContent = 'Save Single Location';
         toggleText.textContent = 'Single Location';
-        console.log('Switched to single location mode');
     } else {
         // Location group mode
         singleSection.style.display = 'none';
@@ -2268,7 +2514,6 @@ function toggleLocationMode() {
         modalTitle.textContent = 'Add Location Group to Database';
         saveButton.textContent = 'Save Location Group';
         toggleText.textContent = 'Location Group';
-        console.log('Switched to location group mode');
     }
 }
 
@@ -2401,7 +2646,6 @@ function selectModalLocation(location, type) {
 }
 
 function selectModalSingleLocation(location) {
-    console.log('selectModalSingleLocation called with:', location);
     const nameParts = location.name.split(",");
     const name = nameParts.slice(0, -1).join(",");
     const id = location.id;
@@ -2409,7 +2653,6 @@ function selectModalSingleLocation(location) {
     document.getElementById('modalSingleLocationSearch').value = '';
     document.getElementById('modalSingleLocationDropdown').style.display = 'none';
     renderModalSingleLocationChip();
-    console.log('modalSingleLocation after selection:', modalSingleLocation);
 }
 
 function renderModalIncludedLocationChips() {
@@ -2449,12 +2692,10 @@ function renderModalExcludedLocationChips() {
 function renderModalSingleLocationChip() {
     const container = document.getElementById('modalSingleLocationChip');
     if (!container) {
-        console.log('modalSingleLocationChip container not found');
         return;
     }
     
     container.innerHTML = '';
-    console.log('renderModalSingleLocationChip, modalSingleLocation:', modalSingleLocation);
     
     if (modalSingleLocation) {
         const chip = document.createElement('div');
@@ -2464,9 +2705,6 @@ function renderModalSingleLocationChip() {
             <span class="remove-chip" onclick="removeModalSingleLocationChip()">&times;</span>
         `;
         container.appendChild(chip);
-        console.log('Single location chip rendered');
-    } else {
-        console.log('No single location to render');
     }
 }
 
@@ -2489,9 +2727,6 @@ async function saveLocation() {
     const toggle = document.getElementById('locationModeToggle');
     const isSingleLocationMode = toggle.checked;
     
-    console.log('saveLocation called, isSingleLocationMode:', isSingleLocationMode);
-    console.log('modalSingleLocation:', modalSingleLocation);
-    
     // Disable the save button
     const saveBtn = document.querySelector('#addLocationModal .btn-primary');
     const originalText = saveBtn.textContent;
@@ -2500,10 +2735,8 @@ async function saveLocation() {
     
     try {
         if (isSingleLocationMode) {
-            console.log('Calling saveSingleLocation');
             await saveSingleLocation();
         } else {
-            console.log('Calling saveLocationGroup');
             await saveLocationGroup();
         }
     } catch (err) {
@@ -2517,8 +2750,6 @@ async function saveLocation() {
 }
 
 async function saveSingleLocation() {
-    console.log('saveSingleLocation called, modalSingleLocation:', modalSingleLocation);
-    
     if (!modalSingleLocation) {
         showErrorToast('Missing Data', 'Please select a location to save.');
         return;
@@ -2547,9 +2778,7 @@ async function saveSingleLocation() {
             closeAddLocationModal();
             
             // Add the single location to the current selection
-            console.log('currentData before adding location:', currentData);
             if (!currentData) {
-                console.log('currentData is null, initializing');
                 currentData = { locations: [] };
             }
             if (!currentData.locations) {
@@ -2565,10 +2794,8 @@ async function saveSingleLocation() {
             });
             
             // Refresh the display
-            console.log('About to call displayEditableForm with:', currentData);
             try {
                 displayEditableForm(currentData);
-                console.log('displayEditableForm completed successfully');
             } catch (error) {
                 console.error('Error in displayEditableForm:', error);
                 throw error;
@@ -2593,9 +2820,6 @@ async function saveSingleLocation() {
 
 async function saveLocationGroup() {
     const nameAsId = document.getElementById('modalNameAsId').value.trim();
-    console.log("modalIncludedLocations", modalIncludedLocations);
-    console.log("modalExcludedLocations", modalExcludedLocations);
-    console.log("nameAsId", nameAsId);
     if (modalIncludedLocations.length === 0) {
         showErrorToast('Missing Data', 'Please select at least one included location.');
         return;
@@ -2672,24 +2896,45 @@ async function saveLocationGroup() {
 }
 
 function removeLocationFromNotFoundList(locationName) {
-    console.log('removeLocationFromNotFoundList called with:', locationName);
     const list = document.getElementById('locationsNotFoundList');
     if (!list) {
-        console.log('locationsNotFoundList not found');
         return;
     }
     
     // Find and remove the item
     const items = list.querySelectorAll('.location-not-found-item');
-    console.log('Found', items.length, 'items in not found list');
     items.forEach((item, index) => {
         const nameElement = item.querySelector('.location-not-found-name');
-        console.log('Item', index, 'name element:', nameElement);
-        if (nameElement) {
-            console.log('Item', index, 'text content:', nameElement.textContent);
-        }
         if (nameElement && nameElement.textContent === locationName) {
-            console.log('Removing item', index);
+            item.remove();
+        }
+    });
+    
+    // Hide the section if no more items
+    if (list.children.length === 0) {
+        document.getElementById('locationsNotFoundSection').style.display = 'none';
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('addLocationModal');
+    if (e.target === modal) {
+        closeAddLocationModal();
+    }
+});
+
+function removeLocationFromNotFoundList(locationName) {
+    const list = document.getElementById('locationsNotFoundList');
+    if (!list) {
+        return;
+    }
+    
+    // Find and remove the item
+    const items = list.querySelectorAll('.location-not-found-item');
+    items.forEach((item, index) => {
+        const nameElement = item.querySelector('.location-not-found-name');
+        if (nameElement && nameElement.textContent === locationName) {
             item.remove();
         }
     });

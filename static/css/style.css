@@ -247,6 +247,7 @@ tr:hover {
     flex: 1;
     position: relative;
     min-width: 200px;
+    margin-bottom: 10px;
 }
 .search-input {
     width: 100%;
@@ -1581,4 +1582,145 @@ tr:hover {
         margin-left: 0;
         align-self: flex-end;
     }
+}
+
+/* ABVR Search Dropdown Styling */
+.abvr-dropdown-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.abvr-dropdown-description {
+    color: #6c757d;
+    font-size: 12px;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.abvr-dropdown-code {
+    color: #007bff;
+    font-family: monospace;
+    font-size: 11px;
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* Enhanced search dropdown for ABVRs */
+#abvrSearchDropdown .search-dropdown-item {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#abvrSearchDropdown .search-dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+#abvrSearchDropdown .search-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+/* ABVR Chips Styling */
+.abvr-chips-container {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    display: none; /* Hidden by default */
+}
+
+/* Show the container when it has content */
+.abvr-chips-container:not(:empty) {
+    display: block;
+}
+
+.abvr-chips-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.abvr-chips-label::before {
+    content: "🎯";
+    font-size: 16px;
+}
+
+.abvr-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.abvr-chip {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    transition: all 0.3s ease;
+    max-width: 300px;
+}
+
+.abvr-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.abvr-chip-name {
+    font-weight: 600;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.abvr-chip-similarity {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.remove-abvr-chip {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.remove-abvr-chip:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* Ensure proper spacing between ABVR sections and chips */
+.abvr-section:last-of-type {
+    margin-bottom: 0;
 }

@@ -6,7 +6,7 @@ from fastapi import Request
 from pydantic import BaseModel
 from utils.email_processor import process_email, get_abvrs, update_audiences_using_added_cohort
 from utils.helper import get_forecast_data, get_cohorts
-from utils.audience_selector import get_filtered_audience_data, refresh_audience_embeddings, get_selected_audience_data_by_abvrs
+from utils.audience_selector import refresh_audience_embeddings, get_selected_audience_data_by_name
 from typing import Dict, Any, List
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -122,8 +122,9 @@ class ForecastRequest(BaseModel):
     target_gender: str
     target_age: List[str]
 
-class AbvrRequest(BaseModel):
-    abvrs: str
+class AudienceSegmentRequest(BaseModel):
+    name: str
+    keywords: List[str]
     
 class RefreshKeywordsRequest(BaseModel):
     keywords: List[str]
@@ -287,35 +288,6 @@ async def get_forecast_endpoint(forecast_request: ForecastRequest) -> Dict[str, 
         }
     }
 
-@app.post("/get-audience-segment-by-abvrs")
-async def get_audience_segment_by_abvrs_endpoint(request: AbvrRequest) -> List[Dict[str, Any]]:
-    return get_selected_audience_data_by_abvrs(request.abvrs)
-    # try:
-    #     logger.info(f"Getting audience segments for ABVRs: {request.abvrs}")
-        
-    #     # Split the comma-separated ABVRs
-    #     abvr_list = [abvr.strip() for abvr in request.abvrs.split(',') if abvr.strip()]
-        
-    #     # Get audience data from MySQL
-    #     all_audience_data = get_filtered_audience_data()
-        
-    #     if not all_audience_data:
-    #         raise HTTPException(status_code=500, detail="Could not retrieve audience data from database")
-        
-    #     # Filter audience data by ABVRs
-    #     matching_audiences = []
-    #     for audience in all_audience_data:
-    #         if audience.get('abvr') in abvr_list:
-    #             matching_audiences.append({
-    #                 'name': audience.get('name', ''),
-    #                 'description': audience.get('description', ''),
-    #                 'abvr': audience.get('abvr', ''),
-    #                 'similarity': 0.5
-    #             })
-        
-    #     logger.info(f"Found {len(matching_audiences)} matching audience segments")
-    #     return matching_audiences
-        
-    # except Exception as e:
-    #     logger.exception("Error getting audience segments by ABVRs")
-    #     raise HTTPException(status_code=500, detail=str(e))
+@app.post("/get-audience-segment-by-name")
+async def get_audience_segment_by_name(request: AudienceSegmentRequest) -> List[Dict[str, Any]]:
+    return get_selected_audience_data_by_name(request.name, request.keywords)

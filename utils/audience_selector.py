@@ -115,7 +115,7 @@ def embed_email(targeting_themes):
     return final_embedding
 
 
-def get_top_matches(email_embedding, data, top_k=5):
+def get_top_matches(email_embedding, data, top_k=200):
     """
     Enhanced similarity matching using multiple embedding strategies
     """
@@ -252,37 +252,32 @@ def get_filtered_audience_data(cohorts=None) -> Optional[List[Dict[str, Any]]]:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         return None,None
 
-def get_selected_audience_data_by_abvrs(abvrs="") -> Optional[List[Dict[str, Any]]]:
+def get_selected_audience_data_by_name(name="", keywords=[]) -> Optional[List[Dict[str, Any]]]:
     """
     Get audience data from AUDIENCE_API_URL and filter based on specific rules
     """
     try:
-        url = f"{os.getenv('AUDIENCE_API_URL')}/getAudienceInfo"
-        response = requests.post(url, data=abvrs)
-        data = response.json()
+        nameArray = [x.strip() for x in name.split(',')]
+        audience_data = []
+        for name in nameArray:
+            url = f"{os.getenv('AUDIENCE_API_URL')}/getActiveAuds?text={name}&page_size=100&offset=0"
+            response = requests.get(url)
+            data = response.json()
+            audience_data.extend(data)
         valid_prefixes = [
             'Persona Installed App', 'Demographic', 'AST', 'User Agent',
             'Industry Impression & Click', 'ET Money', 'User Action',
             'In Market', 'Parent', 'MTAG', 'Interest', 'Package'
         ]
-        filtered_entry = [
-            {
-                "name": entry['audience_name'],
-                "description": entry['description'],
-                "abvr": entry['abvr'],
-                'similarity': 0.5
-            }
-            for entry in data
-            if entry.get('l30d_uniques', 0) > 0
+        filtered_entry = [{'abvr': entry['abvr'], 'name': entry['audience_name'], 'description': entry['description']} for entry in audience_data if entry.get('l30d_uniques', 0) > 0
             and entry.get('audience_name')
             and entry.get('description')
             and (
                 entry.get('audiencePrefix') in valid_prefixes
                 or entry.get('audience_name', '').startswith('Interest |')
-            )
-        ]
-        logger.info(f"Filtered entry after abvrs: {len(filtered_entry)}")
-        return filtered_entry
+            )]
+        final_entries = find_relevant_entries(keywords, filtered_entry)
+        return final_entries
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
