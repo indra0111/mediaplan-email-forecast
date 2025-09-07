@@ -190,32 +190,13 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="targetAge">Target Age:</label>
-                    <div class="age-options">
-                        <label class="age-option">
-                            <input type="checkbox" value="All" class="age-checkbox">
-                            <span class="age-label">All Ages</span>
-                        </label>
-                        <label class="age-option">
-                            <input type="checkbox" value="18-24" class="age-checkbox">
-                            <span class="age-label">18-24</span>
-                        </label>
-                        <label class="age-option">
-                            <input type="checkbox" value="25-34" class="age-checkbox">
-                            <span class="age-label">25-34</span>
-                        </label>
-                        <label class="age-option">
-                            <input type="checkbox" value="35-44" class="age-checkbox">
-                            <span class="age-label">35-44</span>
-                        </label>
-                        <label class="age-option">
-                            <input type="checkbox" value="45-54" class="age-checkbox">
-                            <span class="age-label">45-54</span>
-                        </label>
-                        <label class="age-option">
-                            <input type="checkbox" value="55+" class="age-checkbox">
-                            <span class="age-label">55+</span>
-                        </label>
+                    <label for="targetAgeInput">Target Age:</label>
+                    <div class="age-input-wrapper">
+                        <input type="text" id="targetAgeInput" placeholder="e.g., 18-24, All, 25-40" class="age-input" autocomplete="off">
+                        <span class="age-input-suffix">Age Range</span>
+                    </div>
+                    <div class="age-input-help">
+                        <p>Enter age range in format: "18-24", "All", or custom range like "25-40"</p>
                     </div>
                 </div>
                 <div class="form-group">

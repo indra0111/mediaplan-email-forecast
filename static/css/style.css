@@ -656,17 +656,8 @@ tr:hover {
     margin-top: 10px;
 }
 
-/* Age Selector Styling */
-/* Enhanced styling for Target Age checkboxes to match radio buttons */
-
-.age-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.age-option {
+/* Age Input Styling */
+.age-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
@@ -674,223 +665,63 @@ tr:hover {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 2px solid #e1e5e9;
     border-radius: 12px;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    user-select: none;
-    /* min-height: 60px; */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: hidden;
+    min-height: 60px;
 }
 
-.age-option::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 0;
+.age-input-wrapper:hover {
+    border-color: #4CAF50;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.1);
 }
 
-.age-option:hover {
-    transform: translateY(-2px);
+.age-input-wrapper:focus-within {
     border-color: #4CAF50;
     box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
 }
 
-.age-option:hover::before {
-    opacity: 0.05;
+.age-input-wrapper input[type="text"] {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: #2c3e50;
+    padding: 0;
+    margin: 0;
 }
 
-.age-option input[type="checkbox"] {
-    position: relative;
-    z-index: 1;
-    margin-right: 14px;
-    width: 18px;
-    height: 18px;
-    accent-color: #4CAF50;
-    cursor: pointer;
-    transform: scale(1.1);
-    transition: all 0.3s ease;
+.age-input-wrapper input[type="text"]:focus {
+    outline: none;
 }
 
-.age-label {
-    position: relative;
-    z-index: 1;
+.age-input-wrapper input[type="text"]::placeholder {
+    color: #95a5a6;
+    font-weight: 400;
+}
+
+.age-input-suffix {
     font-size: 14px;
     font-weight: 600;
-    color: #2c3e50;
-    transition: all 0.3s ease;
-    letter-spacing: 0.3px;
-    flex: 1;
+    color: #7f8c8d;
+    margin-left: 8px;
+    padding: 4px 8px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 6px;
+    white-space: nowrap;
 }
 
-/* Selected state styling */
-.age-option input[type="checkbox"]:checked + .age-label {
-    color: #2e7d32;
-    font-weight: 700;
-    transform: scale(1.02);
+.age-input-help {
+    margin-top: 8px;
 }
 
-.age-option input[type="checkbox"]:checked {
-    transform: scale(1.2);
-}
-
-/* Enhanced selected state for the entire option */
-.age-option:has(input[type="checkbox"]:checked) {
-    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-    border-color: #4CAF50;
-    border-width: 2px;
-    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
-    transform: translateY(-1px);
-}
-
-.age-option:has(input[type="checkbox"]:checked)::before {
-    opacity: 0.1;
-}
-
-/* Special styling for "All" option */
-.age-option:has(input[value="All"]:checked) {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    border-color: #2196F3;
-}
-
-.age-option:has(input[value="All"]:checked)::before {
-    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-    opacity: 0.1;
-}
-
-/* Focus state for accessibility */
-.age-option:focus-within {
-    outline: none;
-    border-color: #2196F3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-}
-
-/* Animation for checkbox selection */
-.age-option input[type="checkbox"]:checked + .age-label::after {
-    position: absolute;
-    right: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #4CAF50;
-    font-weight: bold;
-    font-size: 18px;
-    animation: ageCheckmark 0.3s ease-in-out;
-}
-
-@keyframes ageCheckmark {
-    0% {
-        opacity: 0;
-        transform: translateY(-50%) scale(0);
-    }
-    50% {
-        opacity: 0.5;
-        transform: translateY(-50%) scale(1.2);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(-50%) scale(1);
-    }
-}
-
-/* Hover effect for checkbox itself */
-.age-option:hover input[type="checkbox"] {
-    transform: scale(1.15);
-}
-
-/* Enhanced age selected display */
-.age-selected-display {
-    padding: 16px;
-    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-    border-radius: 10px;
-    border: 2px solid #4CAF50;
-    font-size: 15px;
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
-    transition: all 0.3s ease;
-}
-
-.age-selected-display:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
-}
-
-.age-selected-label {
-    font-weight: 700;
-    color: #2e7d32;
-    margin-right: 8px;
-}
-
-.age-selected-text {
-    color: #1b5e20;
-    font-weight: 600;
-    padding: 4px 12px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 20px;
-    display: inline-block;
-    min-width: 60px;
-    text-align: center;
-}
-
-/* Responsive design for age selector */
-@media (max-width: 768px) {
-    .age-options {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-    
-    .age-option {
-        padding: 12px 16px;
-        min-height: 55px;
-    }
-    
-    .age-label {
-        font-size: 14px;
-    }
-    
-    .age-option input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-    }
-}
-
-@media (max-width: 480px) {
-    .age-options {
-        grid-template-columns: 1fr;
-    }
-    
-    .age-option {
-        padding: 14px 18px;
-        min-height: 60px;
-    }
-}
-
-/* Special hover effects for different age ranges */
-.age-option:has(input[value="18-24"]:hover) {
-    border-color: #FF5722;
-}
-
-.age-option:has(input[value="25-34"]:hover) {
-    border-color: #FF9800;
-}
-
-.age-option:has(input[value="35-44"]:hover) {
-    border-color: #FFC107;
-}
-
-.age-option:has(input[value="45-54"]:hover) {
-    border-color: #8BC34A;
-}
-
-.age-option:has(input[value="55+"]:hover) {
-    border-color: #9C27B0;
-}
-
-.age-option:has(input[value="All"]:hover) {
-    border-color: #2196F3;
+.age-input-help p {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin: 0;
+    font-style: italic;
 }
 
 /* Toast Notification System */

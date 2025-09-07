@@ -1072,20 +1072,7 @@ function displayEditableForm(data) {
     document.getElementById('duration').value = parseInt(data.duration.split(" ")[0]);
 
     // Set Age Selection
-    const selectedAges = data.target_age || [];
-    const ageCheckboxes = Array.from(document.querySelectorAll('.age-checkbox'));
-    
-    // Clear all checkboxes first
-    ageCheckboxes.forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    
-    // Check the appropriate ones
-    ageCheckboxes.forEach(checkbox => {
-        if (selectedAges.includes(checkbox.value)) {
-            checkbox.checked = true;
-        }
-    });
+    document.getElementById('targetAgeInput').value = data.target_age;
 
     // Display ABVRs with checkboxes and "Select All" option
     const abvrsContainer = document.getElementById('abvrsContainer');
@@ -1353,8 +1340,7 @@ async function getForecast() {
     
     // Get form values
     const { creativeSize, deviceCategory, targetGender } = getSelectedValues();
-    const targetAge = Array.from(document.querySelectorAll('.age-checkbox:checked'))
-        .map(checkbox => checkbox.value);
+    const targetAge = document.getElementById('targetAgeInput').value;
     const duration = parseInt(document.getElementById('duration').value);
     
     // Clear previous results
@@ -1465,6 +1451,23 @@ function displayForecastResults(forecastData) {
     }
 }
 
+function validateAgeFormat(ageStr) {
+    // Regex for X+ (e.g., "18+", "55+")
+    const openEndedRegex = /^\d{1,2}\+$/;
+    // Regex for X-Y (e.g., "18-24", "20-30")
+    const rangeRegex = /^(\d{1,2})-(\d{1,2})$/;
+    if (openEndedRegex.test(ageStr)) {
+      return true;
+    }
+    const match = ageStr.match(rangeRegex);
+    if (match) {
+      const start = parseInt(match[1], 10);
+      const end = parseInt(match[2], 10);
+      return start < end; // Ensure X < Y
+    }
+    return false;
+}
+  
 async function createPresentation() {
     if (!currentForecastData || !currentData) {
         showErrorToast('No Data', 'No forecast data available for presentation.');
@@ -1480,7 +1483,11 @@ async function createPresentation() {
         return;
     }
     
-    const targetAge = Array.from(document.querySelectorAll('.age-checkbox:checked')).map(checkbox => checkbox.value);
+    const targetAge = document.getElementById('targetAgeInput').value;
+    if(!targetAge || !validateAgeFormat(targetAge)) {
+        showErrorToast('Age Format Error', 'Please enter a valid target age for the presentation.');
+        return;
+    }
     const createPresentationBtn = document.getElementById('createPresentationBtn');
     const originalText = createPresentationBtn.textContent;
     createPresentationBtn.textContent = 'Creating Presentation...';
@@ -2408,28 +2415,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    // Add event listeners for age checkboxes
-    const ageCheckboxes = Array.from(document.querySelectorAll('.age-checkbox'));
-    ageCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            // If "All" is selected, uncheck others
-            if (this.value === 'All' && this.checked) {
-                ageCheckboxes.forEach(cb => {
-                    if (cb !== this) {
-                        cb.checked = false;
-                    }
-                });
-            }
-            // If other options are selected, uncheck "All"
-            else if (this.value !== 'All' && this.checked) {
-                const allCheckbox = document.querySelector('.age-checkbox[value="All"]');
-                if (allCheckbox) {
-                    allCheckbox.checked = false;
-                }
-            }
-        });
-    });
 });
 // Locations Not Found Functions
 function displayLocationsNotFound(locationsNotFound) {

@@ -66,13 +66,19 @@ def get_response(subject, body, cohorts):
     - "TIL_All_Languages_RNF" → if "All Languages" or "Regional Languages" mentioned
 
     **Demographics:**
-    - Target Ages: ["18-24", "25-34", "35-44", "45-54", "55+", "All"]
-    - Age Inference Examples:
-    - "college students", "youth", "Gen Z", "teenagers" → "18-24"
-    - "young professionals", "millennials", "working professionals" → "25-34"
-    - "middle-aged", "parents", "decision makers" → "35-44" or "45-54"
-    - "senior citizens", "retired", "elderly" → "55+"
-    - If unclear or not mentioned → "All"
+    - Target Age: must be returned as a single string (not an array).  
+    - The LLM must infer or directly extract the most relevant age bracket from the email content.  
+    - Valid formats:
+    - **Fixed range** → "X-Y" (e.g., "18-24", "25-34", "35-44", "45-54", "18-55", "20-30", "22-45")  
+        - If the email explicitly mentions a range (e.g., "20-30"), **use that exact range** without rounding or mapping to predefined brackets.
+    - **Open-ended lower bound** → "X+" (e.g., "18+", "20+", "55+")  
+    - **Catch-all** → "All" (if unclear, unspecified, or broad targeting)  
+    - Examples:
+    - "college students", "youth", "Gen Z", "teenagers" → `"18-24"`
+    - "young professionals", "millennials", "working professionals" → `"25-34"`
+    - "middle-aged", "parents", "decision makers" → `"35-44"` or `"45-54"`
+    - "senior citizens", "retired", "elderly" → `"55+"`
+    - "broad targeting", "general audience", "across all age groups" → `"All"`
 
     - Target Genders: ["Male", "Female", "All"]
     - Gender Inference Examples:
@@ -96,7 +102,7 @@ def get_response(subject, body, cohorts):
         "creative_size": "Banners",
         "device_category": "All",
         "target_gender": "All",
-        "target_age": ["All"],
+        "target_age": "All",
         "duration": 30
     }}
     
@@ -339,7 +345,7 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
         "left_abvrs": left_auds,
         "keywords": keywords,
         "target_gender": target_gender if target_gender else "All",
-        "target_age": target_age if target_age else ["All"]
+        "target_age": target_age if target_age else "All"
     }
     
 def get_location_response(subject: str, body: str) -> dict:

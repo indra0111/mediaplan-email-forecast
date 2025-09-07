@@ -212,7 +212,54 @@ def simplify_locations(locations):
 
     return simplified,merged_included
 
-def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], presets: List[str], creative_size: str, device_category: str, duration: int, gender: str, age: List[str]) -> Dict[str, Any]:
+def get_age_scale(age: str) -> float:
+    age_scale_dict = {
+        "18-24": 0.15,
+        "25-34": 0.35,
+        "35-44": 0.3,
+        "45-54": 0.1,
+        "55+": 0.1,
+        "All": 1.0
+    }
+
+    bucket_ranges = {
+        "18-24": (18, 24),
+        "25-34": (25, 34),
+        "35-44": (35, 44),
+        "45-54": (45, 54),
+        "55+": (55, 100),
+    }
+    if age == "All":
+        return 1.0
+    if age in age_scale_dict:
+        return age_scale_dict[age]
+
+    # Open-ended like "18+"
+    if age.endswith("+"):
+        start = int(age[:-1])
+        end = 100
+    # Ranges like "18-32"
+    elif "-" in age:
+        start, end = map(int, age.split("-"))
+    else:
+        return 0.0  # fallback
+
+    total_scale = 0.0
+
+    for bucket, (b_start, b_end) in bucket_ranges.items():
+        # find overlap
+        overlap_start = max(start, b_start)
+        overlap_end = min(end, b_end)
+        if overlap_start <= overlap_end:
+            overlap_years = overlap_end - overlap_start + 1
+            bucket_years = b_end - b_start + 1
+            weight = age_scale_dict[bucket]
+            # prorate contribution
+            total_scale += weight * (overlap_years / bucket_years)
+
+    return round(total_scale, 3)
+
+def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], presets: List[str], creative_size: str, device_category: str, duration: int, gender: str, age: str) -> Dict[str, Any]:
     """Get forecast data for a cohort and locations"""
     creative_size_dict={
         "Banners": [[300, 200],[728, 90],[300, 600],[320, 50],[120, 600]],
@@ -245,25 +292,11 @@ def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], pr
         "Male": 0.7,
         "Female": 0.3
     }
-    age_scale_dict={
-        "All": 1,
-        "18-24": 0.15,
-        "25-34": 0.35,
-        "35-44": 0.3,
-        "45-54": 0.1,
-        "55+": 0.1
-    }
     scale = 1.0
     if gender in gender_scale_dict.keys():
         scale*=gender_scale_dict[gender]
     
-    age_scale=0.0
-    if "All" in age:
-        age_scale=1.0
-    else:
-        for a in age:
-            if a in age_scale_dict.keys():
-                age_scale+=age_scale_dict[a]
+    age_scale=get_age_scale(age)
     scale*=age_scale
     logger.info(f"scale: {scale}")
     devices= device_category_dict[device_category]
