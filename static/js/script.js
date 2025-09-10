@@ -1465,7 +1465,7 @@ function validateAgeFormat(ageStr) {
       const end = parseInt(match[2], 10);
       return start < end; // Ensure X < Y
     }
-    return false;
+    return ageStr === "All"; // Allow all ages
 }
   
 async function createPresentation() {
