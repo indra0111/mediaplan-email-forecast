@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional, Tuple
 from utils.similarity_based_rag import get_location_groups, get_top_k_location_group_matches
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -195,22 +196,21 @@ def parse_locations_dict(locations: List[Dict[str, Any]]) -> Tuple[List[Dict[str
 def simplify_locations(locations):
     simplified = []
     merged_included = []
-    india_found = False
+    overall_found = False
     for loc in locations:
         included = loc.get("includedLocations", [])
         excluded = loc.get("excludedLocations", [])
 
         # Merge condition: single included location, no excluded
         if len(included) == 1 and not excluded:
-            if included[0]["id"] == 2356:
-                india_found = True
             merged_included.append(included[0])
+        elif len(included) == 0 and len(excluded) == 0:
+            overall_found = True
         else:
             simplified.append(loc)
-    if not india_found:
-        merged_included.append({"id": 2356, "name": "India,IN,COUNTRY"})
 
-    return simplified,merged_included
+    print(f"simplified: {simplified} merged_included: {merged_included} overall_found: {overall_found}")
+    return simplified,merged_included, overall_found
 
 def get_age_scale(age: str) -> float:
     age_scale_dict = {
@@ -302,24 +302,50 @@ def get_forecast_data(audience_segment: str, locations: List[Dict[str, Any]], pr
     devices= device_category_dict[device_category]
     size= creative_size_dict[creative_size]
     abvrs=audience_segment
-    final_response={}
     result={}
-    simplified_locations,merged_included_locations=simplify_locations(locations)
-    logger.info(f"simplified_locations: {simplified_locations}")
-    logger.info(f"merged_included_locations: {merged_included_locations}")
+    simplified_locations,merged_included_locations, overall_found =simplify_locations(locations)
     for preset in presets:
+        overall_included = set()
+        overall_excluded = set()
+        overall = []
+        final_response={}
         for location in simplified_locations:
             forecast = get_forecast(abvrs, location["includedLocations"], location["excludedLocations"], preset, size, devices, False, duration, location["nameAsId"], scale)
+            logger.info(f"forecast for {location}: {forecast}")
             if forecast:
                 final_response={**final_response, **forecast}
+                overall.append(location)
             else:
                 logger.info(f"Failed to get forecast for {location}")
         forecast = get_forecast(abvrs, merged_included_locations, [], preset, size, devices, True, duration, "All", scale)
+        logger.info(f"forecast for All: {forecast}")
         if forecast:
             final_response={**final_response, **forecast}
+            overall.append({"includedLocations": merged_included_locations, "excludedLocations": [], "nameAsId": "All"})
         else:
             logger.info(f"Failed to get forecast for All")
             
+        logger.info(f"final_response before overall: {final_response}")
+        if len(final_response) == 1:
+            only_value = next(iter(final_response.values()))
+            logger.info(f"only_value: {only_value}: copied: {copy.deepcopy(only_value)}")
+            final_response["Overall"] = copy.deepcopy(only_value)
+        else:
+            if overall_found:
+                overall_included = set()
+                overall_excluded = set()
+            else:
+                for loc in overall:
+                    for inc in loc.get("includedLocations", []):
+                        overall_included.add(inc["id"])
+                    for exc in loc.get("excludedLocations", []):
+                        overall_excluded.add(exc["id"])
+            logger.info(f"overall_included: {overall_included}")
+            logger.info(f"overall_excluded: {overall_excluded}")
+            logger.info(f"overall: {overall}")
+            overall_forecast = get_forecast(abvrs, [{"id": id, "name": ""} for id in overall_included], [{"id": id, "name": ""} for id in overall_excluded], preset, size, devices, False, duration, "Overall", scale)
+            if overall_forecast:
+                final_response={**final_response, **overall_forecast}
         result[preset_display_text[preset]]=final_response
     logger.info(f"final_response: {result}")
     return result

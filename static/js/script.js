@@ -1915,6 +1915,11 @@ function addNewLocation() {
         }
         nameAsId = groupChip.name;
     }
+
+    if(nameAsId && nameAsId.trim()=="Overall"){
+        showErrorToast('Invalid Name as ID', '"Overall" is a reserved name. Please choose a different Name as ID.');
+        return;
+    }
     
     // Validation: Check if included locations count is not 1 and excluded locations count is non-zero and nameAsId is empty
     if (includedLocations.length !== 1 && excludedLocations.length > 0 && !nameAsId) {
