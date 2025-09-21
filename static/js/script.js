@@ -957,6 +957,240 @@ async function addSelectedPreset() {
     showSuccessToast('Preset Added', `Added "${exactMatch}" to the selection.`);
 }
 
+function editLocation(index) {
+    const location = currentData.locations[index];
+    if (!location) return;
+    const editModal = document.createElement('div');
+    editModal.className = 'modal';
+    editModal.id = 'editLocationModal';
+    editModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Location</h3>
+                <span class="modal-close" onclick="closeEditLocationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editNameAsId">Name as ID:</label>
+                    <input type="text" id="editNameAsId" value="${location.nameAsId || ''}" class="search-input" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Included Locations:</label>
+                    <div class="edit-location-chips" id="editIncludedLocations">
+                        ${location.includedLocations.map(loc => `
+                            <span class="chip">
+                                ${typeof loc === 'string' ? loc : loc.name}
+                                <button class="remove-chip" onclick="removeEditIncludedLocation('${typeof loc === 'string' ? loc : loc.name}')">&times;</button>
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div class="search-input-container">
+                        <input type="text" id="editIncludedLocationInput" placeholder="Add included location..." class="search-input" autocomplete="off">
+                        <div id="editIncludedLocationDropdown" class="search-dropdown"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Excluded Locations:</label>
+                    <div class="edit-location-chips" id="editExcludedLocations">
+                        ${location.excludedLocations.map(loc => `
+                            <span class="chip">
+                                ${typeof loc === 'string' ? loc : loc.name}
+                                <button class="remove-chip" onclick="removeEditExcludedLocation('${typeof loc === 'string' ? loc : loc.name}')">&times;</button>
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div class="search-input-container">
+                        <input type="text" id="editExcludedLocationInput" placeholder="Add excluded location..." class="search-input" autocomplete="off">
+                        <div id="editExcludedLocationDropdown" class="search-dropdown"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeEditLocationModal()" class="btn-secondary">Cancel</button>
+                <button type="button" onclick="saveEditedLocation(${index})" class="btn-primary">Save Changes</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(editModal);
+    setupEditLocationSearch();
+    editModal.style.display = 'block';
+}
+
+function closeEditLocationModal() {
+    const modal = document.getElementById('editLocationModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function setupEditLocationSearch() {
+    const includedInput = document.getElementById('editIncludedLocationInput');
+    const excludedInput = document.getElementById('editExcludedLocationInput');
+    if (includedInput) {
+        const newIncludedInput = includedInput.cloneNode(true);
+        includedInput.parentNode.replaceChild(newIncludedInput, includedInput);
+        newIncludedInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim().toLowerCase();
+            if (searchTerm.length === 0) {
+                document.getElementById('editIncludedLocationDropdown').style.display = 'none';
+                return;
+            }
+            const matchingLocations = availableLocations.filter(location =>
+                location.name.toLowerCase().includes(searchTerm) &&
+                !Array.from(document.querySelectorAll('#editIncludedLocations .chip')).some(chip => 
+                    chip.textContent.replace('×', '').trim() === location.name
+                )
+            );
+            showEditLocationDropdown(matchingLocations, 'editIncludedLocationDropdown', 'included');
+        });
+        newIncludedInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchTerm = this.value.trim();
+                if (searchTerm) {
+                    const exactMatch = availableLocations.find(loc => 
+                        loc.name.toLowerCase() === searchTerm.toLowerCase()
+                    );
+                    if (exactMatch) {
+                        addEditLocation(exactMatch, 'included');
+                    } else {
+                        const matchingLocations = availableLocations.filter(location =>
+                            location.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                            !Array.from(document.querySelectorAll('#editIncludedLocations .chip')).some(chip => 
+                                chip.textContent.replace('×', '').trim() === location.name
+                            )
+                        );
+                        if (matchingLocations.length > 0) {
+                            showEditLocationDropdown(matchingLocations, 'editIncludedLocationDropdown', 'included');
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    if (excludedInput) {
+        const newExcludedInput = excludedInput.cloneNode(true);
+        excludedInput.parentNode.replaceChild(newExcludedInput, excludedInput);
+        newExcludedInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim().toLowerCase();
+            if (searchTerm.length === 0) {
+                document.getElementById('editExcludedLocationDropdown').style.display = 'none';
+                return;
+            }
+            const matchingLocations = availableLocations.filter(location =>
+                location.name.toLowerCase().includes(searchTerm) &&
+                !Array.from(document.querySelectorAll('#editExcludedLocations .chip')).some(chip => 
+                    chip.textContent.replace('×', '').trim() === location.name
+                )
+            );
+            showEditLocationDropdown(matchingLocations, 'editExcludedLocationDropdown', 'excluded');
+        });
+        newExcludedInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchTerm = this.value.trim();
+                if (searchTerm) {
+                    const exactMatch = availableLocations.find(loc => 
+                        loc.name.toLowerCase() === searchTerm.toLowerCase()
+                    );
+                    if (exactMatch) {
+                        addEditLocation(exactMatch, 'excluded');
+                    } else {
+                        const matchingLocations = availableLocations.filter(location =>
+                            location.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                            !Array.from(document.querySelectorAll('#editExcludedLocations .chip')).some(chip => 
+                                chip.textContent.replace('×', '').trim() === location.name
+                            )
+                        );
+                        if (matchingLocations.length > 0) {
+                            showEditLocationDropdown(matchingLocations, 'editExcludedLocationDropdown', 'excluded');
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function showEditLocationDropdown(matchingLocations, dropdownId, type) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+    
+    if (matchingLocations.length === 0) {
+        dropdown.innerHTML = '<div class="no-results">No matching locations found</div>';
+    } else {
+        dropdown.innerHTML = matchingLocations.map((location, idx) => 
+            `<div class="search-dropdown-item" data-idx="${idx}">${location.name}</div>`
+        ).join('');
+        const items = dropdown.querySelectorAll('.search-dropdown-item');
+        items.forEach((item, idx) => {
+            item.addEventListener('click', function() {
+                addEditLocation(matchingLocations[idx], type);
+            });
+        });
+    }
+    dropdown.style.display = 'block';
+}
+
+function addEditLocation(location, type) {
+    const container = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Locations`);
+    if (!container) return;
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `
+        ${location.name}
+        <button class="remove-chip" onclick="removeEdit${type.charAt(0).toUpperCase() + type.slice(1)}Location('${location.name}')">&times;</button>
+    `;
+    container.appendChild(chip);
+    const input = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}LocationInput`);
+    if (input) input.value = '';
+    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}LocationDropdown`).style.display = 'none';
+}
+
+function removeEditIncludedLocation(locationName) {
+    const chips = document.querySelectorAll('#editIncludedLocations .chip');
+    chips.forEach(chip => {
+        if (chip.textContent.includes(locationName)) {
+            chip.remove();
+        }
+    });
+}
+
+function removeEditExcludedLocation(locationName) {
+    const chips = document.querySelectorAll('#editExcludedLocations .chip');
+    chips.forEach(chip => {
+        if (chip.textContent.includes(locationName)) {
+            chip.remove();
+        }
+    });
+}
+
+function saveEditedLocation(index) {
+    const nameAsId = document.getElementById('editNameAsId').value.trim();
+    const includedChips = document.querySelectorAll('#editIncludedLocations .chip');
+    const excludedChips = document.querySelectorAll('#editExcludedLocations .chip');
+    const includedLocations = Array.from(includedChips).map(chip => {
+        const locationName = chip.textContent.replace('×', '').trim();
+        const foundLocation = availableLocations.find(loc => loc.name === locationName);
+        return foundLocation || { name: locationName, id: null };
+    });
+    const excludedLocations = Array.from(excludedChips).map(chip => {
+        const locationName = chip.textContent.replace('×', '').trim();
+        const foundLocation = availableLocations.find(loc => loc.name === locationName);
+        return foundLocation || { name: locationName, id: null };
+    });
+    currentData.locations[index] = {
+        includedLocations: includedLocations,
+        excludedLocations: excludedLocations,
+        nameAsId: nameAsId,
+        checked: currentData.locations[index].checked
+    };
+    displayEditableForm(currentData);
+    closeEditLocationModal();
+    showSuccessToast('Location Updated', 'Location has been updated successfully!');
+}
+
 function displayEditableForm(data) {
     // Display Cohorts with checkboxes and "Select All" option
     const cohortsContainer = document.getElementById('cohortsContainer');
@@ -1029,6 +1263,7 @@ function displayEditableForm(data) {
                 <div class="location-content">
                     <div class="location-included">${included}${excludedText}${nameAsId}</div>
                 </div>
+                <button class="edit-location-btn" onclick="editLocation(${index})" title="Edit Location">✏️</button>
             </div>`;
         }).join('')}
     `;

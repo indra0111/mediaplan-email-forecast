@@ -179,6 +179,46 @@ button:disabled {
 .location-content {
     flex: 1;
 }
+.edit-location-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+.edit-location-btn:hover {
+    background-color: #e0e0e0;
+}
+.edit-location-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+.edit-location-chips .chip {
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.edit-location-chips .chip .remove-chip {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    margin-left: 5px;
+}
+.edit-location-chips .chip .remove-chip:hover {
+    opacity: 0.8;
+}
 .location-included {
     color: #4CAF50;
     font-weight: bold;
