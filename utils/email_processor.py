@@ -335,7 +335,7 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     return {
         "cohort": valid_cohort_list,
         "locations": locations,  # Use separately extracted locations
-        "locations_not_found": [],  # You can add logic to check against known locations
+        "locations_not_found": locations_not_found,  # You can add logic to check against known locations
         "preset": preset,
         "creative_size": creative_size,
         "device_category": device_category + " Devices",
@@ -353,7 +353,7 @@ def get_location_response(subject: str, body: str) -> dict:
     location_prompt = f"""
     You are a location extraction specialist for digital advertising campaigns in India. Your task is to identify and structure location targeting information from email content.
 
-    **CONTEXT:** You're analyzing email requests for ad campaigns that need geographic targeting across Indian states, cities, and regions.
+    **CONTEXT:** You're analyzing email requests for ad campaigns that may include geographic targeting across both Indian and international locations (countries, states, cities, or regions).
 
     **Email Content:**
     Subject: {subject}
@@ -361,7 +361,7 @@ def get_location_response(subject: str, body: str) -> dict:
 
     **LOCATION EXTRACTION RULES:**
 
-    1. **DETECTION:** If no location is mentioned → return empty array `[]`
+    1. **DETECTION:** Identify all geographic mentions (Indian or international). If no geographic term is mentioned → return empty array `[]`
 
     2. **ABBREVIATION EXPANSION:** Always expand state abbreviations to full names:
        - "MH" → "Maharashtra", "KA" → "Karnataka", "TN" → "Tamil Nadu"
