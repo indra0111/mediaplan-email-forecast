@@ -388,7 +388,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
             renderExcludedLocationChips();
 
             const locations_not_found = data.locations_not_found;
-            if (locations_not_found.length > 0) {
+            if (locations_not_found) {
                 displayLocationsNotFound(locations_not_found);
             }
         } else {
@@ -1628,6 +1628,12 @@ function displayForecastResults(forecastData) {
             downloadBtn.style.display = 'inline-block';
         }
         
+        // Show the audience CSV download button
+        const downloadAudienceCsvBtn = document.getElementById('downloadAudienceCsvBtn');
+        if (downloadAudienceCsvBtn) {
+            downloadAudienceCsvBtn.style.display = 'inline-block';
+        }
+                    
         // Show the presentation button
         const presentationBtn = document.getElementById('createPresentationBtn');
         if (presentationBtn) {
@@ -1676,6 +1682,12 @@ function displayForecastResults(forecastData) {
         const downloadBtn = document.getElementById('downloadCsvBtn');
         if (downloadBtn) {
             downloadBtn.style.display = 'none';
+        }
+        
+        // Hide the audience CSV download button if no data
+        const downloadAudienceCsvBtn = document.getElementById('downloadAudienceCsvBtn');
+        if (downloadAudienceCsvBtn) {
+            downloadAudienceCsvBtn.style.display = 'none';
         }
         
         // Hide the presentation button if no data
@@ -1818,6 +1830,52 @@ function downloadForecastCsv() {
     document.body.removeChild(link);
     
     showSuccessToast('Download Complete', 'CSV file downloaded successfully!');
+}
+
+function downloadAudienceCsv() {
+    if (!currentData) {
+        showErrorToast('No Data', 'No Audience data available to download.');
+        return;
+    }
+    
+    // Get selected ABVRs
+    const selectedAbvrs = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+
+    // Combine abvr data
+    const allAbvrs = [...(currentData.cohort_abvrs || []), ...(currentData.abvrs || []), ...(currentData.left_abvrs || [])];
+
+    const selectedAbvrDetails = allAbvrs.filter(abvr => selectedAbvrs.includes(abvr.abvr));
+
+    // Build audience data rows
+    const abvrRows = [];
+    abvrRows.push(['Abvr', 'Name', 'Description']);
+    selectedAbvrDetails.forEach(abvr => {
+        abvrRows.push([abvr.abvr, abvr.name, abvr.description]);
+    });
+
+    // Convert to CSV string
+    const csvContent = abvrRows.map(row =>
+        row.map(cell => {
+            const escaped = String(cell).replace(/"/g, '""');
+            if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+                return `"${escaped}"`;
+            }
+            return escaped;
+        }).join(',')
+    ).join('\n');
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `audience_data_${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showSuccessToast('Download Complete', 'CSV file for audience downloaded successfully!');
 }
 
 function generateForecastCsv(forecastData, selectedAbvrs, duration) {
@@ -2665,7 +2723,10 @@ function displayLocationsNotFound(locationsNotFound) {
     
     // Clear previous content
     list.innerHTML = '';
-    
+    if(locationsNotFound.length==0){
+        section.style.display = 'none';
+        return;
+    }
     // Create items for each location not found
     locationsNotFound.forEach(location => {
         const item = document.createElement('div');

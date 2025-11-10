@@ -216,41 +216,31 @@ def get_filtered_audience_data(cohorts=None) -> Optional[List[Dict[str, Any]]]:
     Get audience data from AUDIENCE_API_URL and filter based on specific rules
     """
     try:
-        url = f"{os.getenv('AUDIENCE_API_URL')}/getActiveAuds?text=&page_size=30000&offset=0"
-        response = requests.get(url)
-        data = response.json()
-        valid_prefixes = [
-            'Persona Installed App', 'Demographic', 'AST', 'User Agent',
-            'Industry Impression & Click', 'ET Money', 'User Action',
-            'In Market', 'Parent', 'MTAG', 'Interest', 'Package'
-        ]
-        filtered_entry = [
-            {
-                "name": entry['audience_name'],
-                "description": entry['description'],
-                "abvr": entry['abvr']
-            }
-            for entry in data
-            if entry.get('l30d_uniques', 0) > 0
-            and entry.get('audience_name')
-            and entry.get('description')
-            and (
-                entry.get('audiencePrefix') in valid_prefixes
-                or entry.get('audience_name', '').startswith('Interest |')
-            )
-        ]
+        logger.info(f"Getting filtered audience data for cohorts: {cohorts}")
         cohort_abvrs = get_abvrs_from_cohorts(cohorts)
-        logger.info(f"Abvrs from cohorts: {cohort_abvrs}")
-        logger.info(f"Filtered entry before abvrs: {len(filtered_entry)}")
-        filtered_cohort_entry = [entry for entry in filtered_entry if entry['abvr'] in cohort_abvrs]
-        logger.info(f"Filtered cohort entry before abvrs: {len(filtered_cohort_entry)}")
-        filtered_entry = [entry for entry in filtered_entry if entry['abvr'] not in cohort_abvrs]
-        logger.info(f"Filtered entry after abvrs: {len(filtered_entry)}")
-        return filtered_entry,filtered_cohort_entry
+        url = f"{os.getenv('AUDIENCE_API_URL')}/getAudienceInfo"
+        response = requests.post(url, data=",".join(list(cohort_abvrs)))
+        data = response.json()
+        return filter_audiences_based_on_prefix(data)
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        return None,None
+        return None
+
+def get_all_audience_data() -> Optional[List[Dict[str, Any]]]:
+    """
+    Get audience data from AUDIENCE_API_URL and filter based on specific rules
+    """
+    try:
+        logger.info(f"Getting all audience data")
+        url = f"{os.getenv('AUDIENCE_API_URL')}/getActiveAuds?text=&page_size=30000&offset=0"
+        response = requests.get(url)
+        data = response.json()
+        return filter_audiences_based_on_prefix(data)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        return None
 
 def get_selected_audience_data_by_name(name="", keywords=[]) -> Optional[List[Dict[str, Any]]]:
     """
@@ -264,18 +254,7 @@ def get_selected_audience_data_by_name(name="", keywords=[]) -> Optional[List[Di
             response = requests.get(url)
             data = response.json()
             audience_data.extend(data)
-        valid_prefixes = [
-            'Persona Installed App', 'Demographic', 'AST', 'User Agent',
-            'Industry Impression & Click', 'ET Money', 'User Action',
-            'In Market', 'Parent', 'MTAG', 'Interest', 'Package'
-        ]
-        filtered_entry = [{'abvr': entry['abvr'], 'name': entry['audience_name'], 'description': entry['description']} for entry in audience_data if entry.get('l30d_uniques', 0) > 0
-            and entry.get('audience_name')
-            and entry.get('description')
-            and (
-                entry.get('audiencePrefix') in valid_prefixes
-                or entry.get('audience_name', '').startswith('Interest |')
-            )]
+        filtered_entry = filter_audiences_based_on_prefix(audience_data)
         final_entries = find_relevant_entries(keywords, filtered_entry)
         return final_entries
 
@@ -354,6 +333,29 @@ def get_relevant_keywords(subject, body):
         logger.error(f"Error calling Azure OpenAI: {e}")
         return None
 
+def filter_audiences_based_on_prefix(audience_data) -> Optional[List[Dict[str, Any]]]:
+    valid_prefixes = [
+        'Persona Installed App', 'Demographic', 'AST', 'User Agent',
+        'Industry Impression & Click', 'ET Money', 'User Action',
+        'In Market', 'Parent', 'MTAG', 'Interest', 'Package'
+    ]
+    filtered_entry = [
+        {
+            'abvr': entry['abvr'], 
+            'name': entry['audience_name'], 
+            'description': entry['description']
+        } 
+        for entry in audience_data 
+        if entry.get('l30d_uniques', 0) > 0
+        and entry.get('audience_name')
+        and entry.get('description')
+        and (
+            entry.get('audiencePrefix') in valid_prefixes
+            or entry.get('audience_name', '').startswith('Interest |')
+        )
+    ]
+    return filtered_entry
+
 def filter_and_clean_audience_data(data):
     """
     Filter and clean audience data for better quality
@@ -377,7 +379,7 @@ def filter_and_clean_audience_data(data):
         # Convert None to empty string and strip
         name = (name or '').strip()
         description = (description or '').strip()
-        abvr = (abvr or '').strip()
+        abvr = str(abvr or '').strip()
         
         # Skip entries with missing critical data
         if not name or not description or not abvr:
@@ -424,7 +426,7 @@ def refresh_audience_embeddings():
     """
     Refresh audience embeddings
     """
-    audience_data = get_filtered_audience_data()
+    audience_data = get_all_audience_data()
     audience_embeddings = force_recompute_embeddings(audience_data)
     return audience_embeddings
 
@@ -495,6 +497,19 @@ def force_recompute_embeddings(audience_data, cache_file="audience_embeddings.cs
     save_embeddings_to_csv(computed_data, cache_file)
     
     return computed_data
+
+def get_all_audience_info_cached():
+    cached_data = load_embeddings_from_csv("audience_embeddings.csv")
+    if cached_data is None:
+        return []
+    data = [
+        {
+        'name': item['name'],
+        'description': item['description'],
+        'abvr': item['abvr'],
+        }
+        for item in cached_data]
+    return data
 
 def get_cached_or_compute_embeddings(audience_data, cache_file="audience_embeddings.csv"):
     """

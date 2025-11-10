@@ -3,7 +3,7 @@ import os
 import json
 from dotenv import load_dotenv
 from utils.helper import get_cohorts, parse_locations_dict
-from utils.audience_selector import get_relevant_keywords, get_filtered_audience_data, check_cache_validity, find_relevant_entries
+from utils.audience_selector import get_relevant_keywords, get_filtered_audience_data, check_cache_validity, find_relevant_entries, get_all_audience_info_cached
 from utils.file_processor import FileProcessor
 import logging
 from typing import Any, List
@@ -227,14 +227,8 @@ def process_top_k_selected_audiences(top_k_selected_audiences, keywords):
     return selected_audiences, left_audiences
 
 def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
-    all_audience_data, cohort_audience_data = get_filtered_audience_data(cohorts)
-
-    if not all_audience_data:
-        logger.info("Error: Could not retrieve audience data from database")
-        exit(1)
-
-    logger.info(f"Loaded {len(all_audience_data)} audience entries")
-
+    cohort_audience_data = get_filtered_audience_data(cohorts)
+    all_audience_data = get_all_audience_info_cached()
     # Check cache status
     cache_valid, cache_message = check_cache_validity()
     logger.info(f"Cache status: {cache_message}")
@@ -263,13 +257,7 @@ def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
     return None, None, None, None
 
 def update_audiences_using_added_cohort(cohorts=[], keywords_array=None):
-    all_audience_data, cohort_audience_data = get_filtered_audience_data(cohorts)
-
-    if not all_audience_data:
-        logger.info("Error: Could not retrieve audience data from database")
-        exit(1)
-
-    logger.info(f"Loaded {len(all_audience_data)} audience entries")
+    cohort_audience_data = get_filtered_audience_data(cohorts)
 
     # Find relevant entries (will use cache if available)
     logger.info(f"\nFinding relevant entries...")
