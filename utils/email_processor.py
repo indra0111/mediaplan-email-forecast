@@ -3,7 +3,7 @@ import os
 import json
 from dotenv import load_dotenv
 from utils.helper import get_cohorts, parse_locations_dict
-from utils.audience_selector import get_relevant_keywords, get_filtered_audience_data, check_cache_validity, find_relevant_entries, get_all_audience_info_cached
+from utils.audience_selector import get_relevant_keywords, get_filtered_audience_data, check_cache_validity, find_relevant_entries, get_all_audience_info_cached, get_cohort_ppt_links
 from utils.file_processor import FileProcessor
 import logging
 from typing import Any, List
@@ -229,6 +229,8 @@ def process_top_k_selected_audiences(top_k_selected_audiences, keywords):
 def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
     cohort_audience_data = get_filtered_audience_data(cohorts)
     all_audience_data = get_all_audience_info_cached()
+    cohort_abvrs = [cohort['abvr'] for cohort in cohort_audience_data]
+    all_audience_data = [audience for audience in all_audience_data if audience['abvr'] not in cohort_abvrs]
     # Check cache status
     cache_valid, cache_message = check_cache_validity()
     logger.info(f"Cache status: {cache_message}")
@@ -246,13 +248,19 @@ def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
     # Find relevant entries (will use cache if available)
     logger.info(f"\nFinding relevant entries...")
     results = find_relevant_entries(keywords_array, all_audience_data)
-    sorted_cohort_entries = find_relevant_entries(keywords_array, cohort_audience_data)
+    sorted_cohort_entries = find_relevant_entries(keywords_array, [item for sublist in cohort_audience_data.values() for item in sublist])
+    final_cohort_sorted_entries = {}
+    for cohort in cohort_audience_data:
+        abvrs = [entry['abvr'] for entry in cohort_audience_data[cohort]]
+        final_cohort_sorted_entries[cohort] = [entry for entry in sorted_cohort_entries if entry['abvr'] in abvrs]
+        final_cohort_sorted_entries[cohort] = sorted(final_cohort_sorted_entries[cohort], key=lambda x: x['similarity'], reverse=True)
+    
     logger.info(f"Results: {len(results)}")
     if not results:
         logger.info("Warning: No relevant entries found")
     else:
         selected_audiences, left_audiences = process_top_k_selected_audiences(results, keywords_array)
-        return keywords_array, sorted_cohort_entries, selected_audiences, left_audiences
+        return keywords_array, final_cohort_sorted_entries, selected_audiences, left_audiences
     
     return None, None, None, None
 
@@ -261,10 +269,15 @@ def update_audiences_using_added_cohort(cohorts=[], keywords_array=None):
 
     # Find relevant entries (will use cache if available)
     logger.info(f"\nFinding relevant entries...")
-    sorted_cohort_entries = find_relevant_entries(keywords_array, cohort_audience_data)
-    logger.info(f"Results: {len(sorted_cohort_entries)}")
-    return sorted_cohort_entries
-
+    sorted_cohort_entries = find_relevant_entries(keywords_array, [v for values in cohort_audience_data.values() for v in values])
+    final_cohort_sorted_entries = {}
+    for cohort in cohort_audience_data:
+        abvrs = [entry['abvr'] for entry in cohort_audience_data[cohort]]
+        final_cohort_sorted_entries[cohort] = [entry for entry in sorted_cohort_entries if entry['abvr'] in abvrs]
+        final_cohort_sorted_entries[cohort] = sorted(final_cohort_sorted_entries[cohort], key=lambda x: x['similarity'], reverse=True)
+    logger.info(f"Results: {len(final_cohort_sorted_entries)}")
+    cohort_ppts_list = get_cohort_ppt_links(cohorts)
+    return final_cohort_sorted_entries, cohort_ppts_list
 
 def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     file_contents = []
@@ -302,13 +315,11 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
     logger.info(f"Location response: {location_response}")
     cohort_list = response['cohort']
     valid_cohort_list = []
-    abvrs_list = []
     for cohort in cohort_list:
         if cohort not in cohorts:
             continue
         valid_cohort_list.append(cohort)
-        abvrs_list.append(cohorts[cohort]['abvrs'])
-    # abvrs = ",".join(abvrs_list)
+    cohort_ppts_list = get_cohort_ppt_links(valid_cohort_list)
     logger.info(f"Response: {response}")
     locations, locations_not_found = parse_locations_dict(location_response)
     logger.info(f"Locations after parsing: {locations}")
@@ -328,7 +339,8 @@ def process_email(subject: str, body: str, files: List[UploadFile]) -> Any:
         "creative_size": creative_size,
         "device_category": device_category + " Devices",
         "duration": str(duration) + " Days",
-        "cohort_abvrs": sorted_cohort_entries,
+        "cohort_auds": sorted_cohort_entries,
+        "cohort_ppts": cohort_ppts_list,
         "abvrs": auds,
         "left_abvrs": left_auds,
         "keywords": keywords,

@@ -1,0 +1,222 @@
+{
+  "DEMO": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for DEMO",
+    "google_slides_url": "https://docs.google.com/presentation/d/18ZeVRf5d9fuagJWweV2quDeE-pM8HaxTM8p5s1BNyj0"
+  },
+  "NCCSAB": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for NCCSAB",
+    "google_slides_url": "https://docs.google.com/presentation/d/11zqWvNyFDlIEyUGlXXgWFNBSzgDyntwQaTRVZc41ykc"
+  },
+  "Entertainment+Sports": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Entertainment+Sports",
+    "google_slides_url": "https://docs.google.com/presentation/d/1YoH2tBSy3_Ec9pG2IMrJ8PsqiFo6M0s-N-BHDf1ge6s"
+  },
+  "Auto-Two wheeler": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Auto-Two wheeler",
+    "google_slides_url": "https://docs.google.com/presentation/d/1GL1f0U3OFX_lvJFjNa8TfEc79tB1ky60ZZ6LdeBps7U"
+  },
+  "Lifestyle and Fitness": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Lifestyle and Fitness",
+    "google_slides_url": "https://docs.google.com/presentation/d/1JnbCQPwuhD_9D_6XDKKyQAoc10se-mxy4VEXjS0Vrco"
+  },
+  "Fashion-Apperals": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Fashion-Apperals",
+    "google_slides_url": "https://docs.google.com/presentation/d/1xdvhKjN3DqNjg_D2rUIJt2zEtEkb5erfflqk426PRhs"
+  },
+  "sports": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for sports",
+    "google_slides_url": "https://docs.google.com/presentation/d/1PlyYULvh7Z-R3re6ZdEYQ_5QixQr4yZS0-pNnlb0bPY"
+  },
+  "Men's Fashion": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Men's Fashion",
+    "google_slides_url": "https://docs.google.com/presentation/d/1cisnwpmwW0VqmE9WP-0ldoQG5Z5Woevmy_RXypG7kNs"
+  },
+  "Apparel,shoppers, fashion, beauty,personal care": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Apparel,shoppers, fashion, beauty,personal care",
+    "google_slides_url": "https://docs.google.com/presentation/d/13-ZAqAoztWrpkbTJyfDJFJuHgUJwwpwa6oMQcSV0nrU"
+  },
+  "Women": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Women",
+    "google_slides_url": "https://docs.google.com/presentation/d/1HsuCUxL0TfXWPqqd9qjkKo5bzOMu-Ey28fTGLlElBRs"
+  },
+  "Grocery": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Grocery",
+    "google_slides_url": "https://docs.google.com/presentation/d/1GC04vBS45JLpJMNsJw-bkOvIuGVYq0v4AGkHnJtGKZc"
+  },
+  "Gadgets & Technology": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Gadgets & Technology",
+    "google_slides_url": "https://docs.google.com/presentation/d/1ZIvRpWGyrhHUHtC-qi1eFdxVkQKyPfgiZJdm2TVLfU0"
+  },
+  "Smart Phone": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Smart Phone",
+    "google_slides_url": "https://docs.google.com/presentation/d/15FouS6FKCmF80hVAlPOoGC4lfTnovnO5osZ35g855cM"
+  },
+  "Auto-Four wheeler": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Auto-Four wheeler",
+    "google_slides_url": "https://docs.google.com/presentation/d/18PBPMyxBQszmmjIM42rwAxvtMs0yLqLe6_z0Uf2qiBI"
+  },
+  "Mutual Funds": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Mutual Funds",
+    "google_slides_url": "https://docs.google.com/presentation/d/1RpH1BCr9gEkdljBd5qS4RJeKecpAlgPUBuWCDsbRfPM"
+  },
+  "Hotels": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Hotels",
+    "google_slides_url": "https://docs.google.com/presentation/d/138W9zSoT808pTpj4W2JUuKHs7Ny1t3XG39jVuz2xaFQ"
+  },
+  "Study Abroad": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Study Abroad",
+    "google_slides_url": "https://docs.google.com/presentation/d/1R-_7HMrEvb2vbMKRQ1AzrYDuh4TSgqQYVvzRIrw9kKo"
+  },
+  "Paint": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Paint",
+    "google_slides_url": "https://docs.google.com/presentation/d/1tBc2Tsi9t1QQTJsnd3t50Qzzv5unxdmnBfvXcwGaAQQ"
+  },
+  "College Students": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for College Students",
+    "google_slides_url": "https://docs.google.com/presentation/d/1rPUvmx_gUFptIP2_el6sIK-lxO5Rmdt8UtqucbeWZsM"
+  },
+  "Working Professionals": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Jobs",
+    "google_slides_url": "https://docs.google.com/presentation/d/1Z2NYFXwVY7Z7M1AXEZt-UnCeQQ1sp-5lF_kzgAlPw-Q"
+  },
+  "Loan": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Loan",
+    "google_slides_url": "https://docs.google.com/presentation/d/1Qbp4Q07dd76IwfkexnwNS4Hj-Gf_UbRhW8n3sJfokhM"
+  },
+  "Food": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Food",
+    "google_slides_url": "https://docs.google.com/presentation/d/1MIr4NjuPonPoCEiiiX6QVrr1X9KrW0tWPVK6wwZX2A8"
+  },
+  "Matrimony": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Matrimony",
+    "google_slides_url": "https://docs.google.com/presentation/d/1rV17iMgquHPbZwZnrX2PMGWc2WAj2WJP_Toz-G-cA4I"
+  },
+  "Shopping": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Shopping",
+    "google_slides_url": "https://docs.google.com/presentation/d/18Th80g6kKTOZEXBwZXpN6LYzdSoDOxe5wyJ-X_CL9eg"
+  },
+  "Insurance": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Insurance",
+    "google_slides_url": "https://docs.google.com/presentation/d/1QuG47zikq9ISt94qe-oCOvtrS-sgq4hVqMHj6imuk3c"
+  },
+  "Job Seeker": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Job Seeker",
+    "google_slides_url": "https://docs.google.com/presentation/d/1AJyGRM4Tbw-3uSuun5ALhiGeyQXqaI2eQ9Fw3JaboXo"
+  },
+  "Real Estate": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Real Estate",
+    "google_slides_url": "https://docs.google.com/presentation/d/179vpZ7TMYqL6wjLuw6gbh828vy_j-Ui-znRix7ISe7c"
+  },
+  "Interior Decoration": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Interior Decoration",
+    "google_slides_url": "https://docs.google.com/presentation/d/16E6L2hxHdwsQoG6ztoUcs4Q3F5Zd0FR5mh5oAuQt50Y"
+  },
+  "School Kids + HNI Parents": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for School Kids + HNI Parents",
+    "google_slides_url": "https://docs.google.com/presentation/d/1tPrBNF448D4mIJXUuN7mw0xq_p_HMYzdHOkuaFMNlj0"
+  },
+  "Small and Medium Industries": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Small and Medium Industries",
+    "google_slides_url": "https://docs.google.com/presentation/d/1M1sK6veAD5bxyXAu-K6T17OAjhajcvB0SQBC3qe2TH0"
+  },
+  "Credit Cards + BFSI": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Credit Cards + BFSI",
+    "google_slides_url": "https://docs.google.com/presentation/d/1peFA0Arbo1dX3DVrG9ssYcmyOoTZ371FOiLhpDZXXxQ"
+  },
+  "Travel": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Travel",
+    "google_slides_url": "https://docs.google.com/presentation/d/1TZ7If91xH4_qPKwcYsqbhDM6ozS8UTriwDVXrRSLfw4"
+  },
+  "HNIs": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for HNIs",
+    "google_slides_url": "https://docs.google.com/presentation/d/1Bb9bSuBuAgdEzUfYX0uSeX9eS5yF_Xshqg82DBVSv3Q"
+  },
+  "Health": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Health",
+    "google_slides_url": "https://docs.google.com/presentation/d/1aZ5lMnYNDWiRn0thvh0_ptzZ5Xkj84NBQRI9tncGaFg"
+  },
+  "Ecommerce": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Ecommerce",
+    "google_slides_url": "https://docs.google.com/presentation/d/1s-RQbsG57iWoB5yYRxR2yDkycgXaG2fJC7PtSe2kRuc"
+  },
+  "Online Payment": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Online Payment",
+    "google_slides_url": "https://docs.google.com/presentation/d/1tI65M7fpj5LqmgJO9Gt5qy0BWVcBloaGrezzZCFueOU"
+  },
+  "Agriculture & Farming": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Agriculture & Farming",
+    "google_slides_url": "https://docs.google.com/presentation/d/1cjdO_CXb8KhpZ3aGtsx0NYkRYFnwgqfFBJ8eGE_gYCE"
+  },
+  "Social Media": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Social Media",
+    "google_slides_url": "https://docs.google.com/presentation/d/1Vsg_c0zihWCumIizuQdbTvfOdUknsgX2jmRuCkIPkzs"
+  },
+  "NRI's": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for NRI's",
+    "google_slides_url": "https://docs.google.com/presentation/d/1JYEID9O1em3o_R6HkXCqQEISz9MfZ7uB1DZeCL_EtZs"
+  },
+  "Religion & Spirituality": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Religion & Spirituality",
+    "google_slides_url": "https://docs.google.com/presentation/d/1XegzpzTyooatpBIk8X1Xwcx3ze_IpGv-e1adJk2ZtvQ"
+  },
+  "Online Games": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for Online Games",
+    "google_slides_url": "https://docs.google.com/presentation/d/1da1vF9yMYiLOSy6A5QE6kTKqp8ycGRpZjgZ6wwO8hhU"
+  },
+  "OTT": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for OTT",
+    "google_slides_url": "https://docs.google.com/presentation/d/17btc3u6BfgoMrR9E6it1gg124Y-9uVsEDwxmdUmEtpg"
+  },
+  "EV Two Wheeler": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for EV Two Wheeler",
+    "google_slides_url": "https://docs.google.com/presentation/d/1nvfx7qQe4waDDhZU8O58ZTpldsJ9IVMT6gNNdoDwSGg"
+  },
+  "EV Four Wheeler": {
+    "status": "success",
+    "message": "Mediaplan generated successfully for EV Four Wheeler",
+    "google_slides_url": "https://docs.google.com/presentation/d/1ZFWrBEQ5xxph_Uu0bQGt8RWXvZb2LgpYyWkXDFolHBo"
+  }
+}

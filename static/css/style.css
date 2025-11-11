@@ -166,6 +166,116 @@ button:disabled {
     align-items: center;
     gap: 10px;
 }
+.cohort-item-wrapper {
+    margin-bottom: 5px;
+}
+.cohort-expand-toggle {
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+    user-select: none;
+    padding: 4px 8px;
+    transition: transform 0.2s ease, color 0.2s ease;
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+}
+.cohort-expand-toggle:hover {
+    color: #4CAF50;
+    transform: scale(1.2);
+}
+.cohort-expand-toggle-placeholder {
+    display: inline-block;
+    min-width: 20px;
+}
+.cohort-abvr-count {
+    color: #666;
+    font-size: 0.85em;
+    font-style: italic;
+    margin-left: 5px;
+}
+.cohort-ppt-link {
+    margin-left: auto;
+    padding: 6px 12px;
+    background-color: #9C27B0;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+.cohort-ppt-link:hover {
+    background-color: #7B1FA2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
+}
+.cohort-ppt-link:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(156, 39, 176, 0.2);
+}
+.cohort-abvrs-container {
+    margin-left: 30px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #4CAF50;
+    border-radius: 4px;
+}
+.cohort-abvr-item {
+    background-color: white;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: box-shadow 0.2s ease;
+}
+.cohort-abvr-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #4CAF50;
+}
+.cohort-abvr-checkbox {
+    margin-top: 3px;
+    cursor: pointer;
+}
+.cohort-abvr-content {
+    flex: 1;
+}
+.cohort-abvr-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.cohort-abvr-description {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+.cohort-abvr-code {
+    background-color: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.8em;
+    display: inline-block;
+    color: #007bff;
+}
+.cohort-abvr-similarity {
+    color: #4CAF50;
+    font-weight: 600;
+    font-size: 0.85em;
+    margin-top: 4px;
+}
 .location-item {
     background-color: white;
     padding: 10px;
@@ -950,7 +1060,28 @@ tr:hover {
 .locations-not-found-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+}
+
+.locations-not-found-display {
+    background-color: white;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.locations-not-found-text {
+    color: #333;
+    font-size: 15px;
+    line-height: 1.6;
+    font-weight: 500;
+    margin-bottom: 15px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #ffc107;
+    word-wrap: break-word;
 }
 
 .location-not-found-item {

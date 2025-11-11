@@ -80,6 +80,20 @@
                 <div id="cohortsContainer"></div>
             </div>
             
+            <!-- ABVRs Section -->
+            <div class="form-section">
+                <h3>Audience Segments (ABVRs)</h3>
+                <p>Select the audience segments you want to target:</p>
+                <div class="cohort-search-section">
+                    <div class="search-input-container">
+                        <input type="text" id="abvrSearch" placeholder="Search for audience segments by name..." class="search-input" autocomplete="off">
+                        <div id="abvrSearchDropdown" class="search-dropdown"></div>
+                    </div>
+                    <button type="button" onclick="addSelectedABVR()" id="addSelectedABVRBtn" class="search-btn">Add Selected</button>
+                </div>
+                <div id="abvrsContainer"></div>
+            </div>
+            
             <!-- Locations Section -->
             <div class="form-section">
                 <h3>Locations</h3>
@@ -102,7 +116,7 @@
                 </div>
                 <div class="cohort-search-section">
                     <div class="search-input-container">
-                        <input type="text" id="nameAsIdInput" placeholder="Name as ID (e.g., Haryana_excluding_Gurgaon)..." class="search-input" autocomplete="off">
+                        <input type="text" id="nameAsIdInput" placeholder="Name for location group (e.g., Top Indian Cities)..." class="search-input" autocomplete="off">
                     </div>
                     <button type="button" onclick="addNewLocation()" class="search-btn">Add Location</button>
                 </div>
@@ -110,8 +124,8 @@
                 
                 <!-- Locations Not Found Section -->
                 <div id="locationsNotFoundSection" class="locations-not-found-section" style="display: none;">
-                    <h4>📍 Locations Not Found in Database</h4>
-                    <p class="locations-not-found-description">The following locations were extracted from your email but are not in our database. You can add them to the database for future use.</p>
+                    <h4>📍 Locations Not Found</h4>
+                    <!-- <p class="locations-not-found-description">We couldn’t find the following locations.</p> -->
                     <div id="locationsNotFoundList" class="locations-not-found-list"></div>
                 </div>
             </div>
@@ -208,19 +222,6 @@
                 </div>
             </div>
             
-            <!-- ABVRs Section -->
-            <div class="form-section">
-                <h3>Audience Segments (ABVRs)</h3>
-                <p>Select the audience segments you want to target:</p>
-                <div class="cohort-search-section">
-                    <div class="search-input-container">
-                        <input type="text" id="abvrSearch" placeholder="Search for audience segments by name..." class="search-input" autocomplete="off">
-                        <div id="abvrSearchDropdown" class="search-dropdown"></div>
-                    </div>
-                    <button type="button" onclick="addSelectedABVR()" id="addSelectedABVRBtn" class="search-btn">Add Selected</button>
-                </div>
-                <div id="abvrsContainer"></div>
-            </div>
             
             <div class="forecast-buttons-container">
                 <button id="getForecastBtn" onclick="getForecast()">Get Forecast</button>

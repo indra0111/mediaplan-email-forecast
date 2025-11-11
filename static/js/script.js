@@ -335,13 +335,20 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
         });
         const data = await response.json(); 
         if (response.ok) {
-            data.cohort_abvrs = (data.cohort_abvrs || []).map(abvr => ({
-                abvr: abvr.abvr,
-                name: abvr.name,
-                description: abvr.description,
-                similarity: abvr.similarity,
-                checked: true
-            }));
+            const flattenedCohortAbvrs = [];
+            for (const cohortName in data.cohort_auds) {
+                if (Array.isArray(data.cohort_auds[cohortName])) {
+                    const cohortAbvrs = data.cohort_auds[cohortName].map(abvr => ({
+                        abvr: abvr.abvr,
+                        name: abvr.name,
+                        description: abvr.description,
+                        similarity: abvr.similarity,
+                        checked: true
+                    }));
+                    flattenedCohortAbvrs.push(...cohortAbvrs);
+                }
+            }
+            data.cohort_abvrs = flattenedCohortAbvrs;
             data.abvrs = (data.abvrs || []).map(abvr => ({
                 abvr: abvr.abvr,
                 name: abvr.name,
@@ -372,6 +379,21 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
                 ...location,
                 checked: true
             }));
+            // Store cohort_auds if it exists and add checked property to each ABVR
+            if (data.cohort_auds) {
+                for (const cohortName in data.cohort_auds) {
+                    if (Array.isArray(data.cohort_auds[cohortName])) {
+                        data.cohort_auds[cohortName] = data.cohort_auds[cohortName].map(abvr => ({
+                            ...abvr,
+                            checked: abvr.checked !== undefined ? abvr.checked : true
+                        }));
+                    }
+                }
+            }
+            // Store cohort_ppts if it exists
+            if (data.cohort_ppts) {
+                data.cohort_ppts = data.cohort_ppts;
+            }
             currentData = data;
             // Get all available cohorts from the helper
             availableCohorts = await getAllAvailableCohorts();
@@ -883,13 +905,24 @@ async function addSelectedCohort() {
     
     if (response.ok) {
         const data = await response.json();
-        const cohortAbvrs = data || [];
-        const abvrs_mapped = cohortAbvrs.map(item => item.abvr);
+        const cohortAbvrs = data.cohort_auds || {};
+        const cohortPpts = data.cohort_ppts || {};
+        currentData.cohort_ppts = cohortPpts;
+        const abvrs_mapped = Object.values(cohortAbvrs).flat().map(item => item.abvr);
         const current_cohort_removed_abvrs = (currentData.cohort_abvrs || []).map(item => item.abvr).filter(abvr => !Array.from(document.querySelectorAll('.abvr-checkbox:checked')).map(checkbox => checkbox.value).includes(abvr));
-        const checkedCohortAbvrs = updateCheckedAbvrs(cohortAbvrs, "abvr", current_cohort_removed_abvrs);
+        const checkedCohortAbvrs = updateCheckedAbvrs(Object.values(cohortAbvrs).flat(), "abvr", current_cohort_removed_abvrs);
         const abvrs = (currentData.abvrs || []).filter(abvr => !abvrs_mapped.includes(abvr.abvr));
         const left_abvrs = (currentData.left_abvrs || []).filter(abvr => !abvrs_mapped.includes(abvr.abvr));
         currentData.cohort_abvrs = checkedCohortAbvrs;
+
+        currentData.cohort_auds[exactMatch] = checkedCohortAbvrs.map(abvr => ({
+            abvr: abvr.abvr,
+            name: abvr.name,
+            description: abvr.description,
+            similarity: abvr.similarity,
+            checked: abvr.checked
+        }));
+        
         currentData.abvrs = abvrs;
         currentData.left_abvrs = left_abvrs;
     }
@@ -1194,17 +1227,47 @@ function saveEditedLocation(index) {
 function displayEditableForm(data) {
     // Display Cohorts with checkboxes and "Select All" option
     const cohortsContainer = document.getElementById('cohortsContainer');
+    const cohort_auds = data.cohort_auds || {};
+    const cohortPpts = data.cohort_ppts || {};
+    
     cohortsContainer.innerHTML = `
         <div class="select-all-section">
             <input type="checkbox" id="selectAllCohorts" ${data.cohort.every(cohort => cohort.checked) ? 'checked' : ''}>
             <label for="selectAllCohorts"><strong>Select All Cohorts</strong></label>
         </div>
-        ${data.cohort.map(cohort => `
-            <div class="cohort-item">
-                <input type="checkbox" class="cohort-checkbox" value="${cohort.name}" ${cohort.checked ? 'checked' : ''}>
-                <span class="cohort-tag">${cohort.name}</span>
+        ${data.cohort.map(cohort => {
+            const cohortAbvrs = cohort_auds[cohort.name] || [];
+            const hasAbvrs = cohortAbvrs.length > 0;
+            const pptLink = cohortPpts[cohort.name];
+            const expandIcon = hasAbvrs ? '<span class="expand-icon">▶</span>' : '';
+            
+            return `
+            <div class="cohort-item-wrapper">
+                <div class="cohort-item" data-cohort-name="${cohort.name}">
+                    ${hasAbvrs ? '<span class="cohort-expand-toggle" onclick="toggleCohortExpand(this, \'' + cohort.name + '\')">▶</span>' : '<span class="cohort-expand-toggle-placeholder"></span>'}
+                    <input type="checkbox" class="cohort-checkbox" value="${cohort.name}" ${cohort.checked ? 'checked' : ''}>
+                    <span class="cohort-tag">${cohort.name}</span>
+                    ${hasAbvrs ? `<span class="cohort-abvr-count">(${cohortAbvrs.length} ABVRs)</span>` : ''}
+                    ${pptLink ? `<a href="${pptLink}" target="_blank" class="cohort-ppt-link" title="Open Presentation">📊 PPT</a>` : ''}
+                </div>
+                ${hasAbvrs ? `
+                <div class="cohort-abvrs-container" id="cohort-abvrs-${cohort.name}" style="display: none;">
+                    ${cohortAbvrs.map(abvr => `
+                        <div class="cohort-abvr-item">
+                            <input type="checkbox" class="cohort-abvr-checkbox" value="${abvr.abvr}" data-cohort="${cohort.name}" ${abvr.checked !== false ? 'checked' : ''}>
+                            <div class="cohort-abvr-content">
+                                <div class="cohort-abvr-name">${abvr.name}</div>
+                                <div class="cohort-abvr-description">${abvr.description || ''}</div>
+                                <div class="cohort-abvr-code">ABVR: ${abvr.abvr}</div>
+                                ${abvr.similarity !== undefined ? `<div class="cohort-abvr-similarity">Similarity: ${(abvr.similarity * 100).toFixed(1)}%</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
             </div>
-        `).join('')}
+            `;
+        }).join('')}
     `;
     
     // Display Locations with checkboxes and "Select All" option
@@ -1311,7 +1374,6 @@ function displayEditableForm(data) {
 
     // Display ABVRs with checkboxes and "Select All" option
     const abvrsContainer = document.getElementById('abvrsContainer');
-    const cohortAbvrs = data.cohort_abvrs || [];
     const model_selected_abvrs = data.abvrs || [];
     const left_abvrs = data.left_abvrs || [];
     abvrsContainer.innerHTML = `
@@ -1319,22 +1381,6 @@ function displayEditableForm(data) {
         <div class="abvr-select-all">
             <input type="checkbox" id="selectAllAbvrs">
             <label for="selectAllAbvrs"><strong>Select All ABVRs</strong></label>
-        </div>
-        <div class="abvr-section">
-            <h4>ABVRs from Selected Cohorts</h4>
-            <div class="abvr-list">
-                ${cohortAbvrs.length > 0 ? cohortAbvrs.map(abvr => `
-                    <div class="abvr-item cohort-abvr">
-                        <input type="checkbox" class="abvr-checkbox" value="${abvr.abvr}" ${abvr.checked ? 'checked' : ''}>
-                        <div class="abvr-content">
-                            <div class="abvr-name">${abvr.name}</div>
-                            <div class="abvr-description">${abvr.description}</div>
-                            <div class="abvr-similarity">Similarity: ${(abvr.similarity * 100).toFixed(1)}%</div>
-                            <div class="abvr-code">ABVR: ${abvr.abvr}</div>
-                        </div>
-                    </div>
-                `).join('') : '<div class="no-abvrs">No ABVRs available from selected cohorts</div>'}
-            </div>
         </div>
         <div class="abvr-section">
             <h4>Selected ABVRs (Recommended)</h4>
@@ -1377,10 +1423,49 @@ function displayEditableForm(data) {
     setupSelectAllCheckbox('selectAllKeywords', 'keyword-checkbox');
     setupSelectAllCheckbox('selectAllAbvrs', 'abvr-checkbox');
     
+    // Setup event listeners for cohort ABVR checkboxes
+    setupCohortAbvrCheckboxes();
+    
     // Setup cohort search functionality
     setupCohortSearch();
     setupPresetSearch();
     setupABVRSearch();
+}
+
+function setupCohortAbvrCheckboxes() {
+    const cohortAbvrCheckboxes = document.querySelectorAll('.cohort-abvr-checkbox');
+    cohortAbvrCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const abvrCode = this.value;
+            const cohortName = this.getAttribute('data-cohort');
+            const isChecked = this.checked;
+            
+            // Update the data model
+            if (currentData && currentData.cohort_auds && currentData.cohort_auds[cohortName]) {
+                const abvr = currentData.cohort_auds[cohortName].find(a => a.abvr === abvrCode);
+                if (abvr) {
+                    abvr.checked = isChecked;
+                }
+            }
+        });
+    });
+}
+
+function toggleCohortExpand(toggleElement, cohortName) {
+    const container = document.getElementById(`cohort-abvrs-${cohortName}`);
+    if (!container) return;
+    
+    const isExpanded = container.style.display !== 'none';
+    
+    if (isExpanded) {
+        container.style.display = 'none';
+        toggleElement.textContent = '▶';
+        toggleElement.style.transform = 'rotate(0deg)';
+    } else {
+        container.style.display = 'block';
+        toggleElement.textContent = '▼';
+        toggleElement.style.transform = 'rotate(0deg)';
+    }
 }
 
 function setupSelectAllCheckbox(selectAllId, checkboxClass) {
@@ -1450,6 +1535,55 @@ function updateCohortCheckedStatus(cohortName, isChecked) {
     if (cohort) {
         cohort.checked = isChecked;
     }
+    
+    // If cohort is deselected, deselect all ABVRs for that cohort
+    if (currentData.cohort_auds && currentData.cohort_auds[cohortName]) {
+        const cohortAbvrs = currentData.cohort_auds[cohortName];
+        const cohortAbvrCodes = cohortAbvrs.map(abvr => abvr.abvr);
+        
+        // Deselect ABVRs in cohort_auds
+        cohortAbvrs.forEach(abvr => {
+            abvr.checked = isChecked;
+        });
+        
+        // Deselect ABVRs in cohort_abvrs array
+        if (currentData.cohort_abvrs) {
+            currentData.cohort_abvrs.forEach(abvr => {
+                if (cohortAbvrCodes.includes(abvr.abvr)) {
+                    abvr.checked = isChecked;
+                }
+            });
+        }
+        
+        // Deselect ABVRs in the UI - both in ABVRs section and in expanded cohort section
+        cohortAbvrCodes.forEach(abvrCode => {
+            // Deselect in main ABVRs section
+            const abvrCheckbox = document.querySelector(`.abvr-checkbox[value="${abvrCode}"]`);
+            if (abvrCheckbox) {
+                abvrCheckbox.checked = isChecked;
+            }
+            
+            // Deselect in expanded cohort section
+            const cohortAbvrCheckbox = document.querySelector(`.cohort-abvr-checkbox[value="${abvrCode}"][data-cohort="${cohortName}"]`);
+            if (cohortAbvrCheckbox) {
+                cohortAbvrCheckbox.checked = isChecked;
+            }
+        });
+        
+        // Update the "Select All ABVRs" checkbox state
+        const selectAllAbvrsCheckbox = document.getElementById('selectAllAbvrs');
+        if (selectAllAbvrsCheckbox) {
+            const allAbvrCheckboxes = document.querySelectorAll('.abvr-checkbox');
+            const checkedAbvrCheckboxes = document.querySelectorAll('.abvr-checkbox:checked');
+            if (checkedAbvrCheckboxes.length === 0) {
+                selectAllAbvrsCheckbox.checked = false;
+            } else if (checkedAbvrCheckboxes.length === allAbvrCheckboxes.length) {
+                selectAllAbvrsCheckbox.checked = true;
+            } else {
+                selectAllAbvrsCheckbox.checked = false;
+            }
+        }
+    }
 }
 
 function updateLocationCheckedStatus(locationIndex, isChecked) {
@@ -1473,6 +1607,18 @@ function updateAbvrCheckedStatus(abvrCode, isChecked) {
     if (currentData && currentData.cohort_abvrs) {
         const cohortAbvr = currentData.cohort_abvrs.find(a => a.abvr === abvrCode);
         if (cohortAbvr) cohortAbvr.checked = isChecked;
+    }
+    
+    if (currentData && currentData.cohort_auds) {
+        for (const cohortName in currentData.cohort_auds) {
+            if (Array.isArray(currentData.cohort_auds[cohortName])) {
+                const abvr = currentData.cohort_auds[cohortName].find(a => a.abvr === abvrCode);
+                if (abvr) {
+                    abvr.checked = isChecked;
+                    break;
+                }
+            }
+        }
     }
     
     if (currentData && currentData.abvrs) {
@@ -2321,14 +2467,29 @@ async function getAbvrsFromKeywords() {
         
         if (response.ok) {
             // Update the current data with new ABVRs
-            const cohortAbvrs = data.cohort_abvrs || [];
-            currentData.cohort_abvrs = cohortAbvrs.map(abvr => ({
-                abvr: abvr.abvr,
-                name: abvr.name,
-                description: abvr.description,
-                similarity: abvr.similarity,
-                checked: true
-            }));
+            // Update cohort_auds
+            if (!currentData.cohort_auds) {
+                currentData.cohort_auds = {};
+            }
+            for (const cohortName in data.cohort_auds) {
+                if (Array.isArray(data.cohort_auds[cohortName])) {
+                    currentData.cohort_auds[cohortName] = data.cohort_auds[cohortName].map(abvr => ({
+                        abvr: abvr.abvr,
+                        name: abvr.name,
+                        description: abvr.description,
+                        similarity: abvr.similarity,
+                        checked: abvr.checked !== undefined ? abvr.checked : true
+                    }));
+                }
+            }
+            // Flatten cohort_auds to create cohort_abvrs
+            const flattenedCohortAbvrs = [];
+            for (const cohortName in currentData.cohort_auds) {
+                if (Array.isArray(currentData.cohort_auds[cohortName])) {
+                    flattenedCohortAbvrs.push(...currentData.cohort_auds[cohortName]);
+                }
+            }
+            currentData.cohort_abvrs = flattenedCohortAbvrs;
             currentData.abvrs = (data.abvrs || []).map(abvr => ({
                 abvr: abvr.abvr,
                 name: abvr.name,
@@ -2655,6 +2816,20 @@ async function addSelectedABVR() {
         );
 
     currentData.cohort_abvrs = markChecked(currentData.cohort_abvrs || []);
+    
+    // Also update cohort_auds
+    if (currentData.cohort_auds) {
+        for (const cohortName in currentData.cohort_auds) {
+            if (Array.isArray(currentData.cohort_auds[cohortName])) {
+                currentData.cohort_auds[cohortName] = currentData.cohort_auds[cohortName].map(a =>
+                    selected_abvrs.includes(a.abvr) && !a.checked
+                        ? { ...a, checked: true }
+                        : a
+                );
+            }
+        }
+    }
+    
     currentData.abvrs = markChecked(currentData.abvrs || []);
 
     // Sort by similarity descending
@@ -2727,18 +2902,14 @@ function displayLocationsNotFound(locationsNotFound) {
         section.style.display = 'none';
         return;
     }
-    // Create items for each location not found
-    locationsNotFound.forEach(location => {
-        const item = document.createElement('div');
-        item.className = 'location-not-found-item';
-        item.innerHTML = `
-            <span class="location-not-found-name">${location}</span>
-            <button class="add-to-db-btn" onclick="openAddLocationModal('${location}')">
-                Add to DB
-            </button>
-        `;
-        list.appendChild(item);
-    });
+    
+    // Display as comma-separated string with good visual styling
+    const locationsString = locationsNotFound.join(', ');
+    list.innerHTML = `
+        <div class="locations-not-found-display">
+            <div class="locations-not-found-text">${locationsString}</div>
+        </div>
+    `;
     
     // Show the section
     section.style.display = 'block';
@@ -3182,52 +3353,16 @@ async function saveLocationGroup() {
 }
 
 function removeLocationFromNotFoundList(locationName) {
-    const list = document.getElementById('locationsNotFoundList');
-    if (!list) {
-        return;
+    // Remove from currentData if it exists
+    if (currentData && currentData.locations_not_found) {
+        currentData.locations_not_found = currentData.locations_not_found.filter(
+            loc => loc !== locationName
+        );
     }
     
-    // Find and remove the item
-    const items = list.querySelectorAll('.location-not-found-item');
-    items.forEach((item, index) => {
-        const nameElement = item.querySelector('.location-not-found-name');
-        if (nameElement && nameElement.textContent === locationName) {
-            item.remove();
-        }
-    });
-    
-    // Hide the section if no more items
-    if (list.children.length === 0) {
-        document.getElementById('locationsNotFoundSection').style.display = 'none';
-    }
-}
-
-// Close modal when clicking outside
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('addLocationModal');
-    if (e.target === modal) {
-        closeAddLocationModal();
-    }
-});
-
-function removeLocationFromNotFoundList(locationName) {
-    const list = document.getElementById('locationsNotFoundList');
-    if (!list) {
-        return;
-    }
-    
-    // Find and remove the item
-    const items = list.querySelectorAll('.location-not-found-item');
-    items.forEach((item, index) => {
-        const nameElement = item.querySelector('.location-not-found-name');
-        if (nameElement && nameElement.textContent === locationName) {
-            item.remove();
-        }
-    });
-    
-    // Hide the section if no more items
-    if (list.children.length === 0) {
-        document.getElementById('locationsNotFoundSection').style.display = 'none';
+    // Re-render the display with updated data
+    if (currentData && currentData.locations_not_found) {
+        displayLocationsNotFound(currentData.locations_not_found);
     }
 }
 

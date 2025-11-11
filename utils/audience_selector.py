@@ -191,10 +191,10 @@ def get_abvrs_from_cohorts(cohorts=None):
         set: A set of abbreviations.
     """
     if cohorts is None:
-        return set()
+        return {}
 
     try:
-        abvrs = set()
+        cohort_abvrs = {}
         url = f"{os.getenv('LOCATIONS_API_URL')}/get-all-mediaplan-cohorts"
         response = requests.get(url)
         response.raise_for_status()  # Raises an error for non-200 status codes
@@ -202,26 +202,29 @@ def get_abvrs_from_cohorts(cohorts=None):
 
         for entry in data:
             if entry.get('name') in cohorts:
-                raw_abvrs = entry.get('abvrs', '')
-                for abvr in raw_abvrs.split(','):
-                    abvrs.add(abvr.strip())
+                cohort_abvrs[entry.get('name')] = entry.get('abvrs', '')
 
-        return abvrs
+        return cohort_abvrs
     except Exception as e:
         logger.error(f"Error getting abvrs from cohorts: {e}")
-        return set()  # Consistent return type
+        return {}  # Consistent return type
 
-def get_filtered_audience_data(cohorts=None) -> Optional[List[Dict[str, Any]]]:
+def get_filtered_audience_data(cohorts=None) -> Dict[str, List[Dict[str, Any]]]:
     """
     Get audience data from AUDIENCE_API_URL and filter based on specific rules
     """
     try:
-        logger.info(f"Getting filtered audience data for cohorts: {cohorts}")
         cohort_abvrs = get_abvrs_from_cohorts(cohorts)
+        combined_abvrs = [part.strip() for abvr in cohort_abvrs.values() for part in abvr.split(',') if part.strip()]
         url = f"{os.getenv('AUDIENCE_API_URL')}/getAudienceInfo"
-        response = requests.post(url, data=",".join(list(cohort_abvrs)))
+        response = requests.post(url, data=",".join(list(combined_abvrs)))
         data = response.json()
-        return filter_audiences_based_on_prefix(data)
+        prefix_based_filtered_data = filter_audiences_based_on_prefix(data)
+        final_data = {}
+        for cohort in cohorts:
+            abvrs = [part.strip() for part in cohort_abvrs.get(cohort, '').split(',') if part.strip()]
+            final_data[cohort] = [entry for entry in prefix_based_filtered_data if entry['abvr'] in abvrs]
+        return final_data
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
@@ -526,3 +529,10 @@ def get_cached_or_compute_embeddings(audience_data, cache_file="audience_embeddi
     audience_abvrs = [entry['abvr'] for entry in audience_data]
     selected_cached_data = [entry for entry in cached_data if entry['abvr'] in audience_abvrs]
     return selected_cached_data
+
+def get_cohort_ppt_links(cohorts):
+    cohort_ppts = json.load(open('cohort_ppts.json'))
+    data = {
+        cohort: cohort_ppts.get(cohort, {}).get('google_slides_url', '') for cohort in cohorts
+    }
+    return data

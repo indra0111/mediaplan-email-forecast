@@ -134,6 +134,9 @@ class AddCohortRequest(BaseModel):
     keywords: List[str]
     cohorts: List[str]
 
+class AddCohortResponse(BaseModel):
+    cohort_auds: Dict[str, List[Dict[str, Any]]]
+    cohort_ppts: Dict[str, str]
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -207,15 +210,18 @@ async def get_abvrs_from_keywords_endpoint(refresh_keywords_request: RefreshKeyw
     keywords_array, sorted_cohort_entries, selected_audiences, left_audiences = get_abvrs("", "", refresh_keywords_request.cohorts, refresh_keywords_request.keywords)
     return {
         "keywords": keywords_array,
-        "cohort_abvrs": sorted_cohort_entries,
+        "cohort_auds": sorted_cohort_entries,
         "abvrs": selected_audiences,
         "left_abvrs": left_audiences
     }
 
-@app.post("/add-cohort")
-async def add_audiences_from_cohort_using_keywords(add_cohort_request: AddCohortRequest) -> List[Dict[str, Any]]:
-    sorted_cohort_entries = update_audiences_using_added_cohort(add_cohort_request.cohorts, add_cohort_request.keywords)
-    return sorted_cohort_entries
+@app.post("/add-cohort", response_model=AddCohortResponse)
+async def add_audiences_from_cohort_using_keywords(add_cohort_request: AddCohortRequest) -> AddCohortResponse:
+    final_cohort_sorted_entries, cohort_ppts_list = update_audiences_using_added_cohort(add_cohort_request.cohorts, add_cohort_request.keywords)
+    return AddCohortResponse(
+        cohort_auds=final_cohort_sorted_entries,
+        cohort_ppts=cohort_ppts_list
+    )
 
 @app.post("/process-email")
 async def process_email_endpoint(
