@@ -35,9 +35,8 @@ function showError(message, duration = 5000) {
     const error = document.getElementById('error');
     if (error) {
         error.textContent = message;
-        error.style.color = '#d32f2f';
-        error.style.backgroundColor = '#ffebee';
-        error.style.borderColor = '#f44336';
+        error.className = 'alert alert-danger';
+        error.classList.remove('d-none');
         error.classList.add('show');
         
         // Scroll to error
@@ -46,18 +45,18 @@ function showError(message, duration = 5000) {
         // Auto-hide after duration
         setTimeout(() => {
             error.classList.remove('show');
+            error.classList.add('d-none');
             error.textContent = '';
         }, duration);
     }
 }
 
-function showSuccess(message, duration = 3000) {
+function showSuccess(message, duration = 5000) {
     const error = document.getElementById('error');
     if (error) {
         error.textContent = message;
-        error.style.color = '#2e7d32';
-        error.style.backgroundColor = '#e8f5e8';
-        error.style.borderColor = '#4caf50';
+        error.className = 'alert alert-success';
+        error.classList.remove('d-none');
         error.classList.add('show');
         
         // Don't scroll for success messages - they're not critical
@@ -66,6 +65,7 @@ function showSuccess(message, duration = 3000) {
         // Auto-hide after duration
         setTimeout(() => {
             error.classList.remove('show');
+            error.classList.add('d-none');
             error.textContent = '';
         }, duration);
     }
@@ -138,7 +138,7 @@ function removeToast(toastId) {
 }
 
 // Convenience functions for different toast types
-function showSuccessToast(title, message, duration = 4000) {
+function showSuccessToast(title, message, duration = 5000) {
     return showToast({
         title,
         message,
@@ -148,7 +148,7 @@ function showSuccessToast(title, message, duration = 4000) {
     });
 }
 
-function showErrorToast(title, message, duration = 6000) {
+function showErrorToast(title, message, duration = 5000) {
     return showToast({
         title,
         message,
@@ -168,7 +168,7 @@ function showWarningToast(title, message, duration = 5000) {
     });
 }
 
-function showInfoToast(title, message, duration = 4000) {
+function showInfoToast(title, message, duration = 5000) {
     return showToast({
         title,
         message,
@@ -318,8 +318,13 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
 
     // Clear previous results
     error.textContent = '';
-    editableForm.classList.add('hidden');
+    error.classList.add('d-none');
+    editableForm.classList.add('d-none');
     forecastResults.innerHTML = '';
+    const forecastResultsCard = document.getElementById('forecastResultsCard');
+    if (forecastResultsCard) {
+        forecastResultsCard.classList.add('d-none');
+    }
     
     try {
         const formData = new FormData();
@@ -403,7 +408,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
             const unformattedAvailableLocationGroups = await getAllAvailableLocationGroups();
             availableLocationGroups = formatLocationGroups(unformattedAvailableLocationGroups);
             displayEditableForm(data);
-            editableForm.classList.remove('hidden');
+            editableForm.classList.remove('d-none');
             
             // Render chips AFTER locations are fetched and form is displayed
             renderIncludedLocationChips();
@@ -965,9 +970,18 @@ async function addSelectedPreset() {
         return;
     }
     
-    // Check if already selected
-    if (currentData.preset.some(p => p.name === exactMatch)) {
-        showErrorToast('Already Selected', `Preset "${exactMatch}" is already selected.`);
+    const existingPreset = currentData.preset.find(p => p.name === exactMatch);
+    if (existingPreset) {
+        if (!existingPreset.checked) {
+            existingPreset.checked = true;
+            displayEditableForm(currentData);
+            showInfoToast('Preset Selected', `Preset "${exactMatch}" is already in the list and has been selected.`);
+        } else {
+            showErrorToast('Already Selected', `Preset "${exactMatch}" is already selected.`);
+        }
+        searchInput.value = '';
+        selectedPresetFromDropdown = null;
+        hidePresetDropdown();
         return;
     }
     
@@ -1004,7 +1018,7 @@ function editLocation(index) {
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="editNameAsId">Name as ID:</label>
+                    <label for="editNameAsId">Location Name:</label>
                     <input type="text" id="editNameAsId" value="${location.nameAsId || ''}" class="search-input" autocomplete="off">
                 </div>
                 <div class="form-group">
@@ -1219,6 +1233,9 @@ function saveEditedLocation(index) {
         nameAsId: nameAsId,
         checked: currentData.locations[index].checked
     };
+    if((includedLocations.length !== 1 || excludedLocations.length > 0)){
+        saveLocationGroup({"nameAsId": nameAsId, "includedLocations": includedLocations, "excludedLocations": excludedLocations});
+    }
     displayEditableForm(currentData);
     closeEditLocationModal();
     showSuccessToast('Location Updated', 'Location has been updated successfully!');
@@ -1242,16 +1259,16 @@ function displayEditableForm(data) {
             const expandIcon = hasAbvrs ? '<span class="expand-icon">▶</span>' : '';
             
             return `
-            <div class="cohort-item-wrapper">
-                <div class="cohort-item" data-cohort-name="${cohort.name}">
+            <div class="cohort-item-wrapper mb-2">
+                <div class="d-flex align-items-center gap-2 p-2 border rounded" data-cohort-name="${cohort.name}">
                     ${hasAbvrs ? '<span class="cohort-expand-toggle" onclick="toggleCohortExpand(this, \'' + cohort.name + '\')">▶</span>' : '<span class="cohort-expand-toggle-placeholder"></span>'}
-                    <input type="checkbox" class="cohort-checkbox" value="${cohort.name}" ${cohort.checked ? 'checked' : ''}>
-                    <span class="cohort-tag">${cohort.name}</span>
-                    ${hasAbvrs ? `<span class="cohort-abvr-count">(${cohortAbvrs.length} ABVRs)</span>` : ''}
-                    ${pptLink ? `<a href="${pptLink}" target="_blank" class="cohort-ppt-link" title="Open Presentation">📊 PPT</a>` : ''}
+                    <input type="checkbox" class="form-check-input cohort-checkbox" value="${cohort.name}" ${cohort.checked ? 'checked' : ''}>
+                    <span class="badge bg-success">${cohort.name}</span>
+                    ${hasAbvrs ? `<span class="text-muted small">(${cohortAbvrs.length} ABVRs)</span>` : ''}
+                    ${pptLink ? `<a href="${pptLink}" target="_blank" class="btn btn-sm btn-secondary ms-auto" title="Open Presentation"><i class="bi bi-file-earmark-slides me-1"></i>View Existing PPT</a>` : ''}
                 </div>
                 ${hasAbvrs ? `
-                <div class="cohort-abvrs-container" id="cohort-abvrs-${cohort.name}" style="display: none;">
+                <div class="cohort-abvrs-container d-none" id="cohort-abvrs-${cohort.name}">
                     ${cohortAbvrs.map(abvr => `
                         <div class="cohort-abvr-item">
                             <input type="checkbox" class="cohort-abvr-checkbox" value="${abvr.abvr}" data-cohort="${cohort.name}" ${abvr.checked !== false ? 'checked' : ''}>
@@ -1321,46 +1338,52 @@ function displayEditableForm(data) {
             const excludedText = excluded ? ` (Excluded: ${excluded})` : '';
             const nameAsId = location.nameAsId && !availableLocationGroups[location.nameAsId] ? ` (ID: ${location.nameAsId})` : '';
             
-            return `<div class="location-item">
-                <input type="checkbox" class="location-checkbox" value="${index}" ${location.checked ? 'checked' : ''}>
-                <div class="location-content">
-                    <div class="location-included">${included}${excludedText}${nameAsId}</div>
+            return `<div class="d-flex align-items-center gap-2 p-2 border rounded mb-2">
+                <input type="checkbox" class="form-check-input location-checkbox" value="${index}" ${location.checked ? 'checked' : ''}>
+                <div class="flex-grow-1">
+                    <div class="text-success fw-bold">${included}${excludedText}${nameAsId}</div>
                 </div>
-                <button class="edit-location-btn" onclick="editLocation(${index})" title="Edit Location">✏️</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="editLocation(${index})" title="Edit Location"><i class="bi bi-pencil"></i></button>
             </div>`;
         }).join('')}
     `;
     
-    // Display Presets with checkboxes and "Select All" option
+    // Display Presets as deletable chips
     const presetsContainer = document.getElementById('presetsContainer');
     const presets = data.preset || [];
     presetsContainer.innerHTML = `
-        <div class="select-all-section">
-            <input type="checkbox" id="selectAllPresets" ${presets.every(preset => preset.checked) ? 'checked' : ''}>
-            <label for="selectAllPresets"><strong>Select All Presets</strong></label>
+        <div class="d-flex flex-wrap gap-2" id="presetsChipsContainer">
+            ${presets.map((preset, index) => `
+                <span class="keyword-chip ${preset.checked ? 'keyword-chip-selected' : 'keyword-chip-unselected'}" 
+                      data-preset="${preset.name}" 
+                      data-index="${index}"
+                      onclick="togglePresetSelection('${preset.name}')">
+                    ${preset.name}
+                    <button type="button" class="remove-keyword-chip" onclick="removePreset('${preset.name}', event)" title="Remove preset">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </span>
+            `).join('')}
         </div>
-        ${presets.map(preset => `
-            <div class="preset-item">
-                <input type="checkbox" class="preset-checkbox" value="${preset.name}" ${preset.checked ? 'checked' : ''}>
-                <span class="preset-tag">${preset.name}</span>
-            </div>
-        `).join('')}
     `;
     
-    // Display Keywords with checkboxes and "Select All" option
+    // Display Keywords as deletable chips
     const keywordsContainer = document.getElementById('keywordsContainer');
     const keywords = data.keywords || [];
     keywordsContainer.innerHTML = `
-        <div class="select-all-section">
-            <input type="checkbox" id="selectAllKeywords" ${keywords.every(keyword => keyword.checked) ? 'checked' : ''}>
-            <label for="selectAllKeywords"><strong>Select All Keywords</strong></label>
+        <div class="d-flex flex-wrap gap-2" id="keywordsChipsContainer">
+            ${keywords.map((keyword, index) => `
+                <span class="keyword-chip ${keyword.checked ? 'keyword-chip-selected' : 'keyword-chip-unselected'}" 
+                      data-keyword="${keyword.keyword}" 
+                      data-index="${index}"
+                      onclick="toggleKeywordSelection('${keyword.keyword}')">
+                    ${keyword.keyword}
+                    <button type="button" class="remove-keyword-chip" onclick="removeKeyword('${keyword.keyword}', event)" title="Remove keyword">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </span>
+            `).join('')}
         </div>
-        ${keywords.map(keyword => `
-            <div class="keyword-item">
-                <input type="checkbox" class="keyword-checkbox" value="${keyword.keyword}" ${keyword.checked ? 'checked' : ''}>
-                <span class="keyword-tag">${keyword.keyword}</span>
-            </div>
-        `).join('')}
     `;
     
     // Set Creative Settings
@@ -1369,8 +1392,8 @@ function displayEditableForm(data) {
     document.querySelector(`input[name="targetGender"][value="${data.target_gender}"]`).checked = true;
     document.getElementById('duration').value = parseInt(data.duration.split(" ")[0]);
 
-    // Set Age Selection
-    document.getElementById('targetAgeInput').value = data.target_age;
+    // Set Age Selection - Parse existing target_age value
+    setAgeRangeFromString(data.target_age);
 
     // Display ABVRs with checkboxes and "Select All" option
     const abvrsContainer = document.getElementById('abvrsContainer');
@@ -1380,10 +1403,10 @@ function displayEditableForm(data) {
         <div id="abvrChipsContainer" class="abvr-chips-container" style="display: none;"></div>
         <div class="abvr-select-all">
             <input type="checkbox" id="selectAllAbvrs">
-            <label for="selectAllAbvrs"><strong>Select All ABVRs</strong></label>
+            <label for="selectAllAbvrs"><strong>Select All Audiences</strong></label>
         </div>
         <div class="abvr-section">
-            <h4>Selected ABVRs (Recommended)</h4>
+            <h4>Selected Audiences (Recommended)</h4>
             <div class="abvr-list">
                 ${model_selected_abvrs.map(abvr => `
                     <div class="abvr-item">
@@ -1399,7 +1422,7 @@ function displayEditableForm(data) {
             </div>
         </div>
         <div class="abvr-section">
-            <h4>Additional ABVRs</h4>
+            <h4>Additional Audiences</h4>
             <div class="abvr-list">
                 ${left_abvrs.map(abvr => `
                     <div class="abvr-item">
@@ -1419,8 +1442,6 @@ function displayEditableForm(data) {
     // Add event listeners for "Select All" checkboxes
     setupSelectAllCheckbox('selectAllCohorts', 'cohort-checkbox');
     setupSelectAllCheckbox('selectAllLocations', 'location-checkbox');
-    setupSelectAllCheckbox('selectAllPresets', 'preset-checkbox');
-    setupSelectAllCheckbox('selectAllKeywords', 'keyword-checkbox');
     setupSelectAllCheckbox('selectAllAbvrs', 'abvr-checkbox');
     
     // Setup event listeners for cohort ABVR checkboxes
@@ -1455,16 +1476,14 @@ function toggleCohortExpand(toggleElement, cohortName) {
     const container = document.getElementById(`cohort-abvrs-${cohortName}`);
     if (!container) return;
     
-    const isExpanded = container.style.display !== 'none';
+    const isExpanded = !container.classList.contains('d-none');
     
     if (isExpanded) {
-        container.style.display = 'none';
+        container.classList.add('d-none');
         toggleElement.textContent = '▶';
-        toggleElement.style.transform = 'rotate(0deg)';
     } else {
-        container.style.display = 'block';
+        container.classList.remove('d-none');
         toggleElement.textContent = '▼';
-        toggleElement.style.transform = 'rotate(0deg)';
     }
 }
 
@@ -1477,9 +1496,7 @@ function setupSelectAllCheckbox(selectAllId, checkboxClass) {
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
             // Update the data model for different checkbox types
-            if (checkboxClass === 'preset-checkbox') {
-                updatePresetCheckedStatus(checkbox.value, this.checked);
-            } else if (checkboxClass === 'cohort-checkbox') {
+            if (checkboxClass === 'cohort-checkbox') {
                 updateCohortCheckedStatus(checkbox.value, this.checked);
             } else if (checkboxClass === 'location-checkbox') {
                 updateLocationCheckedStatus(checkbox.value, this.checked);
@@ -1503,9 +1520,7 @@ function setupSelectAllCheckbox(selectAllId, checkboxClass) {
             }
             
             // Update the data model for different checkbox types
-            if (checkboxClass === 'preset-checkbox') {
-                updatePresetCheckedStatus(this.value, this.checked);
-            } else if (checkboxClass === 'cohort-checkbox') {
+            if (checkboxClass === 'cohort-checkbox') {
                 updateCohortCheckedStatus(this.value, this.checked);
             } else if (checkboxClass === 'location-checkbox') {
                 updateLocationCheckedStatus(this.value, this.checked);
@@ -1526,7 +1541,43 @@ function updatePresetCheckedStatus(presetName, isChecked) {
     const preset = currentData.preset.find(p => p.name === presetName);
     if (preset) {
         preset.checked = isChecked;
+        // Update chip visual state
+        const chip = document.querySelector(`.keyword-chip[data-preset="${presetName}"]`);
+        if (chip) {
+            if (isChecked) {
+                chip.classList.remove('keyword-chip-unselected');
+                chip.classList.add('keyword-chip-selected');
+            } else {
+                chip.classList.remove('keyword-chip-selected');
+                chip.classList.add('keyword-chip-unselected');
+            }
+        }
     }
+}
+
+function togglePresetSelection(presetName) {
+    if (!currentData || !currentData.preset) return;
+    const preset = currentData.preset.find(p => p.name === presetName);
+    if (preset) {
+        const newCheckedState = !preset.checked;
+        updatePresetCheckedStatus(presetName, newCheckedState);
+    }
+}
+
+function removePreset(presetName, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    if (!currentData || !currentData.preset) return;
+    
+    // Remove from currentData
+    currentData.preset = currentData.preset.filter(p => p.name !== presetName);
+    
+    // Re-render form
+    displayEditableForm(currentData);
+    
+    showInfoToast('Preset Removed', `Removed "${presetName}" from presets.`);
 }
 
 function updateCohortCheckedStatus(cohortName, isChecked) {
@@ -1599,8 +1650,45 @@ function updateKeywordCheckedStatus(keywordText, isChecked) {
     const keyword = currentData.keywords.find(k => k.keyword === keywordText);
     if (keyword) {
         keyword.checked = isChecked;
+        // Update chip visual state
+        const chip = document.querySelector(`.keyword-chip[data-keyword="${keywordText}"]`);
+        if (chip) {
+            if (isChecked) {
+                chip.classList.remove('keyword-chip-unselected');
+                chip.classList.add('keyword-chip-selected');
+            } else {
+                chip.classList.remove('keyword-chip-selected');
+                chip.classList.add('keyword-chip-unselected');
+            }
+        }
     }
 }
+
+function toggleKeywordSelection(keywordText) {
+    if (!currentData || !currentData.keywords) return;
+    const keyword = currentData.keywords.find(k => k.keyword === keywordText);
+    if (keyword) {
+        const newCheckedState = !keyword.checked;
+        updateKeywordCheckedStatus(keywordText, newCheckedState);
+    }
+}
+
+function removeKeyword(keywordText, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    if (!currentData || !currentData.keywords) return;
+    
+    // Remove from currentData
+    currentData.keywords = currentData.keywords.filter(k => k.keyword !== keywordText);
+    
+    // Re-render keywords
+    displayEditableForm(currentData);
+    
+    showInfoToast('Keyword Removed', `Removed "${keywordText}" from keywords.`);
+}
+
 
 function updateAbvrCheckedStatus(abvrCode, isChecked) {
     // Update in all three ABVR arrays
@@ -1684,12 +1772,10 @@ async function getForecast() {
     const selectedLocations = selectedLocationIndices.map(index => currentData.locations[index]);
     
     // Get selected Presets
-    const selectedPresets = Array.from(document.querySelectorAll('.preset-checkbox:checked'))
-        .map(checkbox => checkbox.value);
+    const selectedPresets = (currentData.preset || []).filter(p => p.checked).map(p => p.name);
     
     // Get selected Keywords
-    const selectedKeywords = Array.from(document.querySelectorAll('.keyword-checkbox:checked'))
-        .map(checkbox => checkbox.value);
+    const selectedKeywords = (currentData.keywords || []).filter(k => k.checked).map(k => k.keyword);
     
     // Get selected ABVRs
     const selectedAbvrs = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
@@ -1721,11 +1807,23 @@ async function getForecast() {
     
     // Get form values
     const { creativeSize, deviceCategory, targetGender } = getSelectedValues();
-    const targetAge = document.getElementById('targetAgeInput').value;
+    const targetAge = getAgeRangeString();
+    
+    if (!targetAge) {
+        showErrorToast('Invalid Age Range', 'Please enter a valid age range (minimum age must be less than or equal to maximum age).');
+        getForecastBtn.textContent = originalText;
+        getForecastBtn.disabled = false;
+        return;
+    }
+    
     const duration = parseInt(document.getElementById('duration').value);
     
-    // Clear previous results
+    // Clear previous results and hide the card
     forecastResults.innerHTML = '';
+    const forecastResultsCard = document.getElementById('forecastResultsCard');
+    if (forecastResultsCard) {
+        forecastResultsCard.classList.add('d-none');
+    }
     
     try {
         const response = await fetch('/get-forecast', {
@@ -1763,27 +1861,33 @@ async function getForecast() {
 
 function displayForecastResults(forecastData) {
     const forecastResults = document.getElementById('forecastResults');
+    const forecastResultsCard = document.getElementById('forecastResultsCard');
     
     // Store the forecast data globally for CSV download
     currentForecastData = forecastData;
+    
+    // Show the forecast results card
+    if (forecastResultsCard) {
+        forecastResultsCard.classList.remove('d-none');
+    }
     
     if (forecastData && typeof forecastData === 'object') {
         // Show the download button
         const downloadBtn = document.getElementById('downloadCsvBtn');
         if (downloadBtn) {
-            downloadBtn.style.display = 'inline-block';
+            downloadBtn.classList.remove('d-none');
         }
         
         // Show the audience CSV download button
         const downloadAudienceCsvBtn = document.getElementById('downloadAudienceCsvBtn');
         if (downloadAudienceCsvBtn) {
-            downloadAudienceCsvBtn.style.display = 'inline-block';
+            downloadAudienceCsvBtn.classList.remove('d-none');
         }
                     
         // Show the presentation button
         const presentationBtn = document.getElementById('createPresentationBtn');
         if (presentationBtn) {
-            presentationBtn.style.display = 'inline-block';
+            presentationBtn.classList.remove('d-none');
         }
         
         for (const [preset, locations] of Object.entries(forecastData)) {
@@ -1823,43 +1927,146 @@ function displayForecastResults(forecastData) {
             forecastResults.appendChild(presetSection);
         }
     } else {
-        forecastResults.innerHTML = '<div class="error">No forecast data found</div>';
+        forecastResults.innerHTML = '<div class="alert alert-warning">No forecast data found</div>';
         // Hide the download button if no data
         const downloadBtn = document.getElementById('downloadCsvBtn');
         if (downloadBtn) {
-            downloadBtn.style.display = 'none';
+            downloadBtn.classList.add('d-none');
         }
         
         // Hide the audience CSV download button if no data
         const downloadAudienceCsvBtn = document.getElementById('downloadAudienceCsvBtn');
         if (downloadAudienceCsvBtn) {
-            downloadAudienceCsvBtn.style.display = 'none';
+            downloadAudienceCsvBtn.classList.add('d-none');
         }
         
         // Hide the presentation button if no data
         const presentationBtn = document.getElementById('createPresentationBtn');
         if (presentationBtn) {
-            presentationBtn.style.display = 'none';
+            presentationBtn.classList.add('d-none');
         }
     }
 }
 
-function validateAgeFormat(ageStr) {
-    // Regex for X+ (e.g., "18+", "55+")
-    const openEndedRegex = /^\d{1,2}\+$/;
-    // Regex for X-Y (e.g., "18-24", "20-30")
-    const rangeRegex = /^(\d{1,2})-(\d{1,2})$/;
-    if (openEndedRegex.test(ageStr)) {
-      return true;
+// Age Range Helper Functions
+function getAgeRangeString() {
+    const minAge = document.getElementById('targetAgeMin');
+    const maxAge = document.getElementById('targetAgeMax');
+    
+    if (!minAge || !maxAge) {
+        return 'All';
     }
-    const match = ageStr.match(rangeRegex);
-    if (match) {
-      const start = parseInt(match[1], 10);
-      const end = parseInt(match[2], 10);
-      return start < end; // Ensure X < Y
+    
+    const min = parseInt(minAge.value);
+    const max = parseInt(maxAge.value);
+    
+    if (isNaN(min) || isNaN(max)) {
+        return 'All';
     }
-    return ageStr === "All"; // Allow all ages
+    
+    if (min > max) {
+        return null; // Invalid range
+    }
+    
+    // If range is 0-100, treat it as "All"
+    if (min === 0 && max === 100) {
+        return 'All';
+    }
+    
+    return `${min}-${max}`;
 }
+
+function setAgeRangeFromString(ageStr) {
+    if (!ageStr) {
+        return;
+    }
+    
+    const minAge = document.getElementById('targetAgeMin');
+    const maxAge = document.getElementById('targetAgeMax');
+    
+    if (!minAge || !maxAge) {
+        return;
+    }
+    
+    // Handle "All" case - set to 0-100
+    if (ageStr.toLowerCase() === 'all') {
+        minAge.value = 0;
+        maxAge.value = 100;
+        return;
+    }
+    
+    // Handle range format (e.g., "18-65")
+    const rangeMatch = ageStr.match(/^(\d+)-(\d+)$/);
+    if (rangeMatch) {
+        const min = parseInt(rangeMatch[1]);
+        const max = parseInt(rangeMatch[2]);
+        minAge.value = min;
+        // Ensure max doesn't exceed 100
+        maxAge.value = Math.min(max, 100);
+        return;
+    }
+    
+    // Handle open-ended format (e.g., "18+")
+    const openEndedMatch = ageStr.match(/^(\d+)\+$/);
+    if (openEndedMatch) {
+        minAge.value = parseInt(openEndedMatch[1]);
+        maxAge.value = 100; // Set max to 100 for open-ended
+        return;
+    }
+    
+    // Default: set to "All" (0-100) if format is not recognized
+    minAge.value = 0;
+    maxAge.value = 100;
+}
+
+// Add validation when age inputs change
+document.addEventListener('DOMContentLoaded', function() {
+    const minAge = document.getElementById('targetAgeMin');
+    const maxAge = document.getElementById('targetAgeMax');
+    
+    if (minAge && maxAge) {
+        minAge.addEventListener('change', function() {
+            const min = parseInt(this.value);
+            const max = parseInt(maxAge.value);
+            if (!isNaN(min) && !isNaN(max) && min > max) {
+                showErrorToast('Invalid Age Range', 'Minimum age cannot be greater than maximum age.');
+                this.value = max;
+            }
+            // Ensure min is not less than 0
+            if (!isNaN(min) && min < 0) {
+                showErrorToast('Invalid Age Range', 'Minimum age cannot be less than 0.');
+                this.value = 0;
+            }
+        });
+        
+        maxAge.addEventListener('change', function() {
+            const min = parseInt(minAge.value);
+            const max = parseInt(this.value);
+            if (!isNaN(min) && !isNaN(max) && min > max) {
+                showErrorToast('Invalid Age Range', 'Maximum age cannot be less than minimum age.');
+                this.value = min;
+            }
+            // Ensure max doesn't exceed 100
+            if (!isNaN(max) && max > 100) {
+                showErrorToast('Invalid Age Range', 'Maximum age cannot exceed 100.');
+                this.value = 100;
+            }
+            // Ensure max is not less than 0
+            if (!isNaN(max) && max < 0) {
+                showErrorToast('Invalid Age Range', 'Maximum age cannot be less than 0.');
+                this.value = 0;
+            }
+        });
+        
+        // Also validate on input event for real-time feedback
+        maxAge.addEventListener('input', function() {
+            const max = parseInt(this.value);
+            if (!isNaN(max) && max > 100) {
+                this.value = 100;
+            }
+        });
+    }
+});
   
 async function createPresentation() {
     if (!currentForecastData || !currentData) {
@@ -1876,9 +2083,9 @@ async function createPresentation() {
         return;
     }
     
-    const targetAge = document.getElementById('targetAgeInput').value;
-    if(!targetAge || !validateAgeFormat(targetAge)) {
-        showErrorToast('Age Format Error', 'Please enter a valid target age for the presentation.');
+    const targetAge = getAgeRangeString();
+    if(!targetAge) {
+        showErrorToast('Age Format Error', 'Please enter a valid target age range for the presentation.');
         return;
     }
     const createPresentationBtn = document.getElementById('createPresentationBtn');
@@ -1975,7 +2182,7 @@ function downloadForecastCsv() {
     link.click();
     document.body.removeChild(link);
     
-    showSuccessToast('Download Complete', 'CSV file downloaded successfully!');
+    showSuccessToast('Download Complete', 'Your audience forecast data has been downloaded successfully!');
 }
 
 function downloadAudienceCsv() {
@@ -2021,7 +2228,7 @@ function downloadAudienceCsv() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showSuccessToast('Download Complete', 'CSV file for audience downloaded successfully!');
+    showSuccessToast('Download Complete', 'Your audience data has been downloaded successfully!');
 }
 
 function generateForecastCsv(forecastData, selectedAbvrs, duration) {
@@ -2105,31 +2312,30 @@ function addNewKeyword() {
     if (!currentData.keywords) {
         currentData.keywords = [];
     }
-    const selectedKeywords = Array.from(document.querySelectorAll('.keyword-checkbox:checked')).map(checkbox => checkbox.value);
-    // Check if already selected
-    let keywords=[]
-    let selected = false, found = false
+    const selectedKeywords = (currentData.keywords || []).filter(k => k.checked).map(k => k.keyword);
+    // Check if already exists
+    let keywords = []
+    let found = false
     for(const keyword of currentData.keywords){
         if(keyword.keyword === keywordToAdd){
-            if(selectedKeywords.includes(keyword.keyword)){
-                selected = true;
-            }
-            keyword.checked = true;
             found = true;
+            keyword.checked = true;
         } else {
             keyword.checked = selectedKeywords.includes(keyword.keyword);
         }
         keywords.push(keyword);
     }
-    if (!found) {
-        keywords.push({keyword: keywordToAdd, checked: true});
-    }
-    if (selected) {
-        showErrorToast('Already Selected', `Keyword "${keywordToAdd}" is already selected.`);
+    if (found) {
+        // Keyword already exists, just refresh the display
+        currentData.keywords = keywords;
+        displayEditableForm(currentData);
+        showInfoToast('Keyword Already Selected', `Keyword "${keywordToAdd}" is already selected.`);
+        keywordInput.value = '';
         return;
     }
     
-    // Add the keyword
+    // Add new keyword
+    keywords.push({keyword: keywordToAdd, checked: true});
     currentData.keywords = keywords;
     
     // Refresh the display
@@ -2146,6 +2352,25 @@ function addNewKeyword() {
     showSuccessToast('Keyword Added', `Added "${keywordToAdd}" to the selection.`);
 }
 
+function updateNameAsIdInputState() {
+    const nameAsIdInput = document.getElementById('nameAsIdInput');
+    if (!nameAsIdInput) return;
+    
+    const actualIncludedLocations = includedLocationChips.filter(chip => chip.type !== 'group');
+    const hasGroup = includedLocationChips.some(chip => chip.type === 'group');
+    
+    if (hasGroup) {
+        return;
+    }
+    
+    if (actualIncludedLocations.length === 1 && excludedLocationChips.length === 0) {
+        nameAsIdInput.disabled = true;
+        nameAsIdInput.value = '';
+    } else {
+        nameAsIdInput.disabled = false;
+    }
+}
+
 function renderIncludedLocationChips() {
     const container = document.getElementById('includedLocationsChips');
     if (!container) return;
@@ -2155,6 +2380,7 @@ function renderIncludedLocationChips() {
     ).join('') + '<input type="text" class="chips-input" id="includedLocationInput" placeholder="Type to search locations..." autocomplete="off">';
     
     setupIncludedLocationInput();
+    updateNameAsIdInputState();
 }
 
 function renderExcludedLocationChips() {
@@ -2166,6 +2392,7 @@ function renderExcludedLocationChips() {
     ).join('') + '<input type="text" class="chips-input" id="excludedLocationInput" placeholder="Type to search locations..." autocomplete="off">';
     
     setupExcludedLocationInput();
+    updateNameAsIdInputState();
 }
 
 function removeIncludedLocationChip(idx) {
@@ -2173,16 +2400,9 @@ function removeIncludedLocationChip(idx) {
     includedLocationChips.splice(idx, 1);
     renderIncludedLocationChips();
     
-    // If the removed chip was a group, re-enable the nameAsId input and excluded location input
+    // If the removed chip was a group, re-enable the excluded location input
     if (removedChip && removedChip.type === 'group') {
-        const nameAsIdInput = document.getElementById('nameAsIdInput');
         const excludedLocationInput = document.getElementById('excludedLocationInput');
-        
-        if (nameAsIdInput) {
-            nameAsIdInput.disabled = false;
-            nameAsIdInput.value = '';
-        }
-        
         if (excludedLocationInput) {
             excludedLocationInput.disabled = false;
         }
@@ -2345,31 +2565,27 @@ function addNewLocation() {
     const excludedLocations = excludedLocationChips.map(chip => chip.name);
     const groupChip = includedLocationChips.find(chip => chip.type === 'group');
     let nameAsId = nameAsIdInput ? nameAsIdInput.value.trim() : '';
-    
     // If a group is selected, excluded locations must be empty and nameAsId is group name
     if (groupChip) {
-        if (excludedLocations.length > 0) {
-            showErrorToast('Invalid Selection', 'Cannot add excluded locations when a location group is selected.');
+        if (excludedLocations.length > 0||includedLocations.length > 0) {
+            showErrorToast('Invalid Selection', 'Cannot add excluded or included locations when a location group is selected.');
             return;
         }
         nameAsId = groupChip.name;
     }
 
     if(nameAsId && nameAsId.trim()=="Overall"){
-        showErrorToast('Invalid Name as ID', '"Overall" is a reserved name. Please choose a different Name as ID.');
+        showErrorToast('Invalid Location Name', '"Overall" is a reserved name. Please choose a different Location Name.');
         return;
     }
     
     // Validation: Check if included locations count is not 1 and excluded locations count is non-zero and nameAsId is empty
-    if (includedLocations.length !== 1 && excludedLocations.length > 0 && !nameAsId) {
-        showErrorToast('Missing Name as ID', 'When you have multiple included locations or excluded locations, you must provide a Name as ID.');
+    if ((includedLocations.length !== 1 || excludedLocations.length > 0) && !nameAsId) {
+        showErrorToast('Missing Location Name', 'A Location Name is required if you haven’t selected exactly one included location or if you’ve excluded any locations.');
         return;
     }
-    
-    // Allow both included and excluded to be empty only if nameAsId is provided
-    if (includedLocations.length === 0 && excludedLocations.length === 0 && !nameAsId) {
-        showErrorToast('Missing Locations', 'Please enter at least one included or excluded location, or provide a Name as ID.');
-        return;
+    if(includedLocations.length == 1 && excludedLocations.length == 0){
+        nameAsId = includedLocations[0].split(',')[0];
     }
     
     if (!currentData.locations) {
@@ -2380,6 +2596,7 @@ function addNewLocation() {
     
     if (groupChip) {
         // For location groups, use the group data structure
+        nameAsId = groupChip.groupData.nameAsId;
         newLocation = {
             includedLocations: groupChip.groupData.includedLocations,
             excludedLocations: groupChip.groupData.excludedLocations,
@@ -2419,8 +2636,12 @@ function addNewLocation() {
         showErrorToast('Already Added', 'This location combination is already added.');
         return;
     }
-    
+    if((includedLocations.length !== 1 || excludedLocations.length > 0) && (!groupChip)){
+        saveLocationGroup(newLocation);
+    }
+    nameAsIdInput.value = '';
     currentData.locations.push(newLocation);
+    removeLocationFromNotFoundList(nameAsId)
     displayEditableForm(currentData);
     
     // Clear chips and inputs
@@ -2428,15 +2649,12 @@ function addNewLocation() {
     excludedLocationChips = [];
     renderIncludedLocationChips();
     renderExcludedLocationChips();
-    
-    if (nameAsIdInput) nameAsIdInput.value = '';
-    
     showSuccessToast('Location Added', 'Location added successfully!');
 }
 
 async function getAbvrsFromKeywords() {
     // Get selected keywords
-    const selectedKeywords = Array.from(document.querySelectorAll('.keyword-checkbox:checked'))
+    const selectedKeywords = (currentData.keywords || []).filter(k => k.checked).map(k => k.keyword)
         .map(checkbox => checkbox.value);
     
     if (selectedKeywords.length === 0) {
@@ -2533,7 +2751,7 @@ async function fetchAudienceSegmentsByName() {
     if (!abvrsToAdd) {
         return [];
     }
-    const selectedKeywords = Array.from(document.querySelectorAll('.keyword-checkbox:checked')).map(checkbox => checkbox.value);
+    const selectedKeywords = (currentData.keywords || []).filter(k => k.checked).map(k => k.keyword);
     try{
         const response = await fetch(`/get-audience-segment-by-name`, {
             method: 'POST',
@@ -2889,7 +3107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-// Locations Not Found Functions
+// Locations Not Resolved Functions
 function displayLocationsNotFound(locationsNotFound) {
     const section = document.getElementById('locationsNotFoundSection');
     const list = document.getElementById('locationsNotFoundList');
@@ -2899,7 +3117,7 @@ function displayLocationsNotFound(locationsNotFound) {
     // Clear previous content
     list.innerHTML = '';
     if(locationsNotFound.length==0){
-        section.style.display = 'none';
+        section.classList.add('d-none');
         return;
     }
     
@@ -2912,41 +3130,7 @@ function displayLocationsNotFound(locationsNotFound) {
     `;
     
     // Show the section
-    section.style.display = 'block';
-}
-
-function openAddLocationModal(locationName) {
-    modalIncludedLocations = [];
-    modalExcludedLocations = [];
-    modalSingleLocation = null;
-    
-    // Reset toggle to single location mode (default)
-    document.getElementById('locationModeToggle').checked = true;
-    toggleLocationMode();
-    
-    // Clear other fields
-    document.getElementById('modalIncludedLocationSearch').value = '';
-    document.getElementById('modalExcludedLocationSearch').value = '';
-    document.getElementById('modalNameAsId').value = locationName;
-    document.getElementById('modalSingleLocationSearch').value = '';
-    
-    // Clear chips
-    renderModalIncludedLocationChips();
-    renderModalExcludedLocationChips();
-    renderModalSingleLocationChip();
-    
-    // Setup search functionality
-    setupModalLocationSearch();
-    
-    // Show the modal
-    document.getElementById('addLocationModal').style.display = 'block';
-}
-
-function closeAddLocationModal() {
-    document.getElementById('addLocationModal').style.display = 'none';
-    modalIncludedLocations = [];
-    modalExcludedLocations = [];
-    modalSingleLocation = null;
+    section.classList.remove('d-none');
 }
 
 function toggleLocationMode() {
@@ -2959,15 +3143,15 @@ function toggleLocationMode() {
     
     if (toggle.checked) {
         // Single location mode
-        singleSection.style.display = 'block';
-        groupSection.style.display = 'none';
+        singleSection.classList.remove('d-none');
+        groupSection.classList.add('d-none');
         modalTitle.textContent = 'Add Single Location to Database';
         saveButton.textContent = 'Save Single Location';
         toggleText.textContent = 'Single Location';
     } else {
         // Location group mode
-        singleSection.style.display = 'none';
-        groupSection.style.display = 'block';
+        singleSection.classList.add('d-none');
+        groupSection.classList.remove('d-none');
         modalTitle.textContent = 'Add Location Group to Database';
         saveButton.textContent = 'Save Location Group';
         toggleText.textContent = 'Location Group';
@@ -3180,119 +3364,14 @@ function removeModalExcludedLocationChip(idx) {
     renderModalExcludedLocationChips();
 }
 
-async function saveLocation() {
-    const toggle = document.getElementById('locationModeToggle');
-    const isSingleLocationMode = toggle.checked;
-    
-    // Disable the save button
-    const saveBtn = document.querySelector('#addLocationModal .btn-primary');
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = 'Saving...';
-    saveBtn.disabled = true;
-    
-    try {
-        if (isSingleLocationMode) {
-            await saveSingleLocation();
-        } else {
-            await saveLocationGroup();
-        }
-    } catch (err) {
-        console.error('Error saving location:', err);
-        showErrorToast('Save Error', 'An error occurred while saving the location: ' + err.message);
-    } finally {
-        // Re-enable the save button
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
-    }
-}
-
-async function saveSingleLocation() {
-    if (!modalSingleLocation) {
-        showErrorToast('Missing Data', 'Please select a location to save.');
-        return;
-    }
-    
-    if (!modalSingleLocation.id || !modalSingleLocation.name) {
-        showErrorToast('Invalid Data', 'Selected location is missing required data (id or name).');
-        return;
-    }
-    
-    try {
-        // Call the API to save single location
-        const response = await fetch(`${API_CONFIG.locations_api_url}/locations/${modalSingleLocation.id}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            // Close the modal
-            const locationSaved = modalSingleLocation;
-            availableLocations.push(locationSaved);
-            closeAddLocationModal();
-            
-            // Add the single location to the current selection
-            if (!currentData) {
-                currentData = { locations: [] };
-            }
-            if (!currentData.locations) {
-                currentData.locations = [];
-            }
-            
-            // Add the new single location to the selection
-            currentData.locations.push({
-                includedLocations: [{"name": locationSaved.name, "id": locationSaved.id}],
-                excludedLocations: [],
-                nameAsId: "",
-                checked: true
-            });
-            
-            // Refresh the display
-            try {
-                displayEditableForm(currentData);
-            } catch (error) {
-                console.error('Error in displayEditableForm:', error);
-                throw error;
-            }
-            
-            // Re-render chips
-            renderIncludedLocationChips();
-            renderExcludedLocationChips();
-            
-            // Remove the location from the not found list
-            removeLocationFromNotFoundList(locationSaved.name.split(",").slice(0, -2).join(","));
-            
-            showSuccessToast('Single Location Added', `Successfully added "${locationSaved.name}" to the database and selection.`);
-        } else {
-            showErrorToast('Save Error', data.detail || 'Failed to save single location to database.');
-        }
-    } catch (err) {
-        console.error('Error saving single location:', err);
-        showErrorToast('Save Error', 'An error occurred while saving the single location: ' + err.message);
-    }
-}
-
-async function saveLocationGroup() {
-    const nameAsId = document.getElementById('modalNameAsId').value.trim();
-    if (modalIncludedLocations.length === 0) {
-        showErrorToast('Missing Data', 'Please select at least one included location.');
-        return;
-    }
-    
-    if (!nameAsId) {
-        showErrorToast('Missing Data', 'Please enter a name as ID.');
-        return;
-    }
-    
+async function saveLocationGroup(locationGroupObj) {
+    const nameAsId = locationGroupObj.nameAsId;
     try {
         // Prepare the location group data
         const locationGroupData = {
             name: nameAsId,
-            includedLocationIds: modalIncludedLocations.map(loc => loc.id),
-            excludedLocationIds: modalExcludedLocations.map(loc => loc.id)
+            includedLocationIds: locationGroupObj.includedLocations.map(loc => loc.id),
+            excludedLocationIds: locationGroupObj.excludedLocations.map(loc => loc.id)
         };
         
         // Call the API to save location group
@@ -3305,50 +3384,12 @@ async function saveLocationGroup() {
         });
         
         if (response.ok) {
-            const data = await response.json();
-            availableLocationGroups = {...availableLocationGroups, ...formatLocationGroups(data)};
-            // Close the modal
-            closeAddLocationModal();
-            
-            // Add the location group to the current selection
-            if (!currentData.locations) {
-                currentData.locations = [];
-            }
-            
-            // Add the new location group to the selection
-            for (const [key, value] of Object.entries(data)) {
-                const included = value.includedLocations.map(loc => ({
-                    "name": loc.name+","+loc.countryCode+","+loc.type, 
-                    "id": loc.locationId
-                }));
-                const excluded = value.excludedLocations.map(loc => ({
-                    "name": loc.name+","+loc.countryCode+","+loc.type, 
-                    "id": loc.locationId
-                }));
-                const name = key;
-                currentData.locations.push({
-                    includedLocations: included,
-                    excludedLocations: excluded,
-                    nameAsId: name,
-                    checked: true
-                });
-                removeLocationFromNotFoundList(name);
-            }
-            
-            // Refresh the display
-            displayEditableForm(currentData);
-            
-            // Re-render chips
-            renderIncludedLocationChips();
-            renderExcludedLocationChips();
-            
-            showSuccessToast('Location Group Added', `Successfully added "${nameAsId}" as a location group to the database and selection.`);
+            console.log('Location group saved successfully');
         } else {
-            showErrorToast('Save Error', data.detail || 'Failed to save location group to database.');
+            console.error('Error saving location group:', response.statusText);
         }
     } catch (err) {
         console.error('Error saving location group:', err);
-        showErrorToast('Save Error', 'An error occurred while saving the location group: ' + err.message);
     }
 }
 
@@ -3365,11 +3406,3 @@ function removeLocationFromNotFoundList(locationName) {
         displayLocationsNotFound(currentData.locations_not_found);
     }
 }
-
-// Close modal when clicking outside
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('addLocationModal');
-    if (e.target === modal) {
-        closeAddLocationModal();
-    }
-});

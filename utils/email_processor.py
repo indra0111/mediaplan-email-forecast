@@ -229,7 +229,7 @@ def process_top_k_selected_audiences(top_k_selected_audiences, keywords):
 def get_abvrs(email_subject, email_body, cohorts=[], keywords_array=None):
     cohort_audience_data = get_filtered_audience_data(cohorts)
     all_audience_data = get_all_audience_info_cached()
-    cohort_abvrs = [cohort['abvr'] for cohort in cohort_audience_data]
+    cohort_abvrs = [cohort["abvr"] for cohorts in cohort_audience_data.values() for cohort in cohorts]
     all_audience_data = [audience for audience in all_audience_data if audience['abvr'] not in cohort_abvrs]
     # Check cache status
     cache_valid, cache_message = check_cache_validity()

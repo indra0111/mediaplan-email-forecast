@@ -3,40 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAM Forecast</title>
+    <title>Agentic Mediaplanner</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>GAM Forecast</h1>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg mb-4">
+        <div class="container-fluid position-relative">
+          <!-- Centered brand text -->
+          <span class="navbar-brand mx-auto text-center fw-bold text-white" href="#">
+            Agentic Mediaplanner
+          </span>
+      
+          <!-- Logo on the right -->
+          <div class="position-absolute end-0 me-3">
+            <img src="/static/images/logo.png" alt="Logo" class="navbar-logo" style="height:60px;">
+          </div>
+        </div>
+      </nav>      
+    
+    <div class="container my-4">
         
         <!-- Email Input Form -->
         <div id="emailFormContainer">
-            <form id="emailForm">
-                <div class="form-group">
-                    <label for="subject">Email Subject:</label>
-                    <input type="text" id="subject" name="subject" required>
-                </div>
-                <div class="form-group">
-                    <label for="body">Email Body:</label>
-                    <textarea id="body" name="body" required></textarea>
-                </div>
-                
-                <!-- File Upload Section -->
-                <div class="form-group">
-                    <label for="fileUpload">Attachments (CSV, Excel, Text files):</label>
-                    <div class="file-upload-container">
-                        <input type="file" id="fileUpload" name="files" multiple accept=".csv,.xlsx,.xls,.txt" class="file-input">
-                        <div class="file-upload-info">
-                            <p>Supported formats: CSV, Excel (.xlsx, .xls), Text (.txt)</p>
-                            <p>Maximum file size: 10MB per file</p>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form id="emailForm">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Email Subject:</label>
+                            <input type="text" class="form-control" id="subject" name="subject" required>
                         </div>
-                    </div>
-                    <div id="fileList" class="file-list"></div>
+                        <div class="mb-3">
+                            <label for="body" class="form-label">Email Body:</label>
+                            <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
+                        </div>
+                        
+                        <!-- File Upload Section -->
+                        <div class="mb-3">
+                            <label for="fileUpload" class="form-label">Attachments (CSV, Excel, Text files):</label>
+                            <div class="file-upload-container">
+                                <input type="file" id="fileUpload" name="files" multiple accept=".csv,.xlsx,.xls,.txt" class="file-input">
+                                <div class="file-upload-info">
+                                    <p class="mb-1">Supported formats: CSV, Excel (.xlsx, .xls), Text (.txt)</p>
+                                    <p class="mb-0">Maximum file size: 10MB per file</p>
+                                </div>
+                            </div>
+                            <div id="fileList" class="file-list mt-3"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Process Email</button>
+                    </form>
                 </div>
-                
-                <button type="submit">Process Email</button>
-            </form>
+            </div>
         </div>
         
         <!-- <div id="loading" class="loading">
@@ -46,260 +69,273 @@
         <!-- <div id="error" class="error"></div> -->
         
         <!-- Editable Form (hidden initially) -->
-        <div id="editableForm" class="hidden">
-            <h2>Edit Campaign Parameters</h2>
+        <div id="editableForm" class="d-none">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Edit Campaign Parameters</h2>
+                </div>
             
             <!-- Error Display -->
-            <div id="error" class="error"></div>
+            <div id="error" class="alert alert-danger d-none" role="alert"></div>
             
-            <!-- Keywords Section -->
-            <div class="form-section">
-                <h3>Keywords</h3>
-                <p>Select the keywords you want to target:</p>
-                <div class="cohort-search-section">
-                    <div class="search-input-container">
-                        <input type="text" id="keywordInput" placeholder="Add new keyword..." class="search-input" autocomplete="off">
-                    </div>
-                    <button type="button" onclick="addNewKeyword()" id="addKeywordBtn" class="search-btn">Add Keyword</button>
-                    <button type="button" onclick="getAbvrsFromKeywords()" id="getAbvrsFromKeywordsBtn" class="search-btn" style="background-color: #FF9800;">Get ABVRs from Keywords</button>
-                </div>
-                <div id="keywordsContainer"></div>
-            </div>
-            
-            <!-- Cohorts Section -->
-            <div class="form-section">
-                <h3>Cohorts</h3>
-                <p>Select the cohorts you want to target:</p>
-                <div class="cohort-search-section">
-                    <div class="search-input-container">
-                        <input type="text" id="cohortSearch" placeholder="Search for cohorts..." class="search-input" autocomplete="off">
-                        <div id="searchDropdown" class="search-dropdown"></div>
-                    </div>
-                    <button type="button" id="addSelectedCohortBtn" onclick="addSelectedCohort()" class="search-btn">Add Selected</button>
-                </div>
-                <div id="cohortsContainer"></div>
-            </div>
-            
-            <!-- ABVRs Section -->
-            <div class="form-section">
-                <h3>Audience Segments (ABVRs)</h3>
-                <p>Select the audience segments you want to target:</p>
-                <div class="cohort-search-section">
-                    <div class="search-input-container">
-                        <input type="text" id="abvrSearch" placeholder="Search for audience segments by name..." class="search-input" autocomplete="off">
-                        <div id="abvrSearchDropdown" class="search-dropdown"></div>
-                    </div>
-                    <button type="button" onclick="addSelectedABVR()" id="addSelectedABVRBtn" class="search-btn">Add Selected</button>
-                </div>
-                <div id="abvrsContainer"></div>
-            </div>
-            
-            <!-- Locations Section -->
-            <div class="form-section">
-                <h3>Locations</h3>
-                <p>Select the locations you want to target:</p>
-                <div class="location-chips-section">
-                    <div class="location-chips-group">
-                        <div class="location-chips-label">Included Locations:</div>
-                        <div class="chips-container included-chips" id="includedLocationsChips">
-                            <input type="text" class="chips-input" id="includedLocationInput" placeholder="Type to search locations..." autocomplete="off">
+            <div class="card-body">
+            <!-- Accordion for all sections -->
+            <div class="accordion mb-4" id="campaignAccordion">
+                <!-- Keywords Section -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#keywordsCollapse">
+                            <i class="bi bi-tags me-2"></i> Keywords
+                        </button>
+                    </h2>
+                    <div id="keywordsCollapse" class="accordion-collapse collapse show" data-bs-parent="#campaignAccordion">
+                        <div class="accordion-body">
+                            <p class="mb-3">Select the keywords you want to target:</p>
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <div class="flex-grow-1 position-relative">
+                                    <input type="text" id="keywordInput" placeholder="Add new keyword..." class="form-control" autocomplete="off">
+                                </div>
+                                <button type="button" onclick="addNewKeyword()" id="addKeywordBtn" class="btn btn-primary">Add Keyword</button>
+                                <button type="button" onclick="getAbvrsFromKeywords()" id="getAbvrsFromKeywordsBtn" class="btn btn-primary">Get ABVRs from Keywords</button>
+                            </div>
+                            <div id="keywordsContainer"></div>
                         </div>
-                        <div id="includedLocationSearchDropdown" class="search-dropdown"></div>
-                    </div>
-                    <div class="location-chips-group">
-                        <div class="location-chips-label">Excluded Locations:</div>
-                        <div class="chips-container excluded-chips" id="excludedLocationsChips">
-                            <input type="text" class="chips-input" id="excludedLocationInput" placeholder="Type to search locations..." autocomplete="off">
-                        </div>
-                        <div id="excludedLocationSearchDropdown" class="search-dropdown"></div>
                     </div>
                 </div>
-                <div class="cohort-search-section">
-                    <div class="search-input-container">
-                        <input type="text" id="nameAsIdInput" placeholder="Name for location group (e.g., Top Indian Cities)..." class="search-input" autocomplete="off">
-                    </div>
-                    <button type="button" onclick="addNewLocation()" class="search-btn">Add Location</button>
-                </div>
-                <div id="locationsContainer"></div>
                 
-                <!-- Locations Not Found Section -->
-                <div id="locationsNotFoundSection" class="locations-not-found-section" style="display: none;">
-                    <h4>📍 Locations Not Found</h4>
-                    <!-- <p class="locations-not-found-description">We couldn’t find the following locations.</p> -->
-                    <div id="locationsNotFoundList" class="locations-not-found-list"></div>
+                <!-- Cohorts Section -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cohortsCollapse">
+                            <i class="bi bi-people me-2"></i> Cohorts
+                        </button>
+                    </h2>
+                    <div id="cohortsCollapse" class="accordion-collapse collapse" data-bs-parent="#campaignAccordion">
+                        <div class="accordion-body">
+                            <p class="mb-3">Select the cohorts you want to target:</p>
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <div class="flex-grow-1 position-relative">
+                                    <input type="text" id="cohortSearch" placeholder="Search for cohorts..." class="form-control" autocomplete="off">
+                                    <div id="searchDropdown" class="search-dropdown"></div>
+                                </div>
+                                <button type="button" id="addSelectedCohortBtn" onclick="addSelectedCohort()" class="btn btn-primary">Add Selected</button>
+                            </div>
+                            <div id="cohortsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ABVRs Section -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#abvrsCollapse">
+                            <i class="bi bi-diagram-3 me-2"></i> Audience Segments
+                        </button>
+                    </h2>
+                    <div id="abvrsCollapse" class="accordion-collapse collapse" data-bs-parent="#campaignAccordion">
+                        <div class="accordion-body">
+                            <p class="mb-3">Select the audience segments you want to target:</p>
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <div class="flex-grow-1 position-relative">
+                                    <input type="text" id="abvrSearch" placeholder="Search for audience segments by name..." class="form-control" autocomplete="off">
+                                    <div id="abvrSearchDropdown" class="search-dropdown"></div>
+                                </div>
+                                <button type="button" onclick="addSelectedABVR()" id="addSelectedABVRBtn" class="btn btn-primary">Add Selected</button>
+                            </div>
+                            <div id="abvrsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Locations Section -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#locationsCollapse">
+                            <i class="bi bi-geo-alt me-2"></i> Locations
+                        </button>
+                    </h2>
+                    <div id="locationsCollapse" class="accordion-collapse collapse" data-bs-parent="#campaignAccordion">
+                        <div class="accordion-body">
+                            <p class="mb-3">Select the locations you want to target:</p>
+                            <div class="row mb-1">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label fw-bold">Included Locations:</label>
+                                    <div class="chips-container included-chips" id="includedLocationsChips">
+                                        <input type="text" class="chips-input" id="includedLocationInput" placeholder="Type to search locations..." autocomplete="off">
+                                    </div>
+                                    <div id="includedLocationSearchDropdown" class="search-dropdown"></div>
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label fw-bold">Excluded Locations:</label>
+                                    <div class="chips-container excluded-chips" id="excludedLocationsChips">
+                                        <input type="text" class="chips-input" id="excludedLocationInput" placeholder="Type to search locations..." autocomplete="off">
+                                    </div>
+                                    <div id="excludedLocationSearchDropdown" class="search-dropdown"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <div class="flex-grow-1">
+                                    <input type="text" id="nameAsIdInput" placeholder="Name for location group (e.g., Top Indian Cities)..." class="form-control" autocomplete="off">
+                                </div>
+                                <button type="button" onclick="addNewLocation()" class="btn btn-primary">Add Location</button>
+                            </div>
+                            <div id="locationsContainer"></div>
+                            
+                            <!-- Locations Not Resolved Section -->
+                            <div id="locationsNotFoundSection" class="alert alert-warning mt-3 d-none">
+                                <h5 class="alert-heading"><i class="bi bi-geo-alt-fill me-2"></i>Locations Not Resolved</h5>
+                                <div id="locationsNotFoundList" class="locations-not-found-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Presets Section -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#presetsCollapse">
+                            <i class="bi bi-sliders me-2"></i> Presets
+                        </button>
+                    </h2>
+                    <div id="presetsCollapse" class="accordion-collapse collapse" data-bs-parent="#campaignAccordion">
+                        <div class="accordion-body">
+                            <p class="mb-3">Select the presets you want to use:</p>
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <div class="flex-grow-1 position-relative">
+                                    <input type="text" id="presetSearch" placeholder="Add new preset..." class="form-control" autocomplete="off">
+                                    <div id="presetSearchDropdown" class="search-dropdown"></div>
+                                </div>
+                                <button type="button" onclick="addSelectedPreset()" class="btn btn-primary">Add Preset</button>
+                            </div>
+                            <div id="presetsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Forecast Settings Section -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#settingsCollapse">
+                            <i class="bi bi-gear me-2"></i> Forecast Settings
+                        </button>
+                    </h2>
+                    <div id="settingsCollapse" class="accordion-collapse collapse" data-bs-parent="#campaignAccordion">
+                        <div class="accordion-body">
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <div class="row g-4">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold mb-2">Creative Size:</label>
+                                            <div class="radio-group compact" data-category="creative">
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="creativeSize" value="Banners" checked>
+                                                    <span class="radio-label">Banners</span>
+                                                </label>
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="creativeSize" value="Interstitial">
+                                                    <span class="radio-label">Interstitial</span>
+                                                </label>
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="creativeSize" value="Skinning">
+                                                    <span class="radio-label">Skinning</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold mb-2">Device Category:</label>
+                                            <div class="radio-group compact" data-category="device">
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="deviceCategory" value="All" checked>
+                                                    <span class="radio-label">All</span>
+                                                </label>
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="deviceCategory" value="Mobile">
+                                                    <span class="radio-label">Mobile</span>
+                                                </label>
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="deviceCategory" value="Desktop">
+                                                    <span class="radio-label">Desktop</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold mb-2">Target Gender:</label>
+                                            <div class="radio-group compact" data-category="gender">
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="targetGender" value="All" checked>
+                                                    <span class="radio-label">All</span>
+                                                </label>
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="targetGender" value="Male">
+                                                    <span class="radio-label">Male</span>
+                                                </label>
+                                                <label class="radio-option compact">
+                                                    <input type="radio" name="targetGender" value="Female">
+                                                    <span class="radio-label">Female</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <hr class="my-2">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="targetAgeMin" class="form-label fw-semibold mb-2">Target Age Range:</label>
+                                    <div class="age-range-wrapper">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="number" id="targetAgeMin" min="0" max="100" value="18" class="form-control age-range-input" placeholder="Min">
+                                            <span class="age-range-separator">to</span>
+                                            <input type="number" id="targetAgeMax" min="0" max="100" value="65" class="form-control age-range-input" placeholder="Max">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="duration" class="form-label fw-semibold mb-2">Duration (Days):</label>
+                                    <div class="age-range-wrapper">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="number" id="duration" min="1" value="30" class="form-control age-range-input" placeholder="30">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Presets Section -->
-            <div class="form-section">
-                <h3>Presets</h3>
-                <p>Select the presets you want to use:</p>
-                <div class="cohort-search-section">
-                    <div class="search-input-container">
-                        <input type="text" id="presetSearch" placeholder="Add new preset..." class="search-input" autocomplete="off">
-                        <div id="presetSearchDropdown" class="search-dropdown"></div>
-                    </div>
-                    <button type="button" onclick="addSelectedPreset()" class="search-btn">Add Preset</button>
-                </div>
-                <div id="presetsContainer"></div>
             </div>
             
-            
-            <!-- Creative Settings Section -->
-            <div class="form-section">
-                <h3>Forecast Settings</h3>
-                <div class="form-group">
-                    <label>Creative Size:</label>
-                    <div class="radio-group" data-category="creative">
-                        <label class="radio-option">
-                            <input type="radio" name="creativeSize" value="Banners" checked>
-                            <span class="radio-label">Banners</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="creativeSize" value="Interstitial">
-                            <span class="radio-label">Interstitial</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="creativeSize" value="Skinning">
-                            <span class="radio-label">Skinning</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="creativeSize" value="Top Banner">
-                            <span class="radio-label">Top Banner</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Device Category:</label>
-                    <div class="radio-group" data-category="device">
-                        <label class="radio-option">
-                            <input type="radio" name="deviceCategory" value="All" checked>
-                            <span class="radio-label">All</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="deviceCategory" value="Mobile">
-                            <span class="radio-label">Mobile</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="deviceCategory" value="Desktop">
-                            <span class="radio-label">Desktop</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Target Gender:</label>
-                    <div class="radio-group" data-category="gender">
-                        <label class="radio-option">
-                            <input type="radio" name="targetGender" value="All" checked>
-                            <span class="radio-label">All</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="targetGender" value="Male">
-                            <span class="radio-label">Male</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="targetGender" value="Female">
-                            <span class="radio-label">Female</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="targetAgeInput">Target Age:</label>
-                    <div class="age-input-wrapper">
-                        <input type="text" id="targetAgeInput" placeholder="e.g., 18-24, All, 25-40" class="age-input" autocomplete="off">
-                        <span class="age-input-suffix">Age Range</span>
-                    </div>
-                    <div class="age-input-help">
-                        <p>Enter age range in format: "18-24", "All", or custom range like "25-40"</p>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="duration">Duration:</label>
-                    <div class="duration-input-wrapper">
-                        <input type="number" id="duration" min="1" max="365" value="30">
-                        <span class="duration-suffix">Days</span>
-                    </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex gap-2 flex-wrap">
+                    <button id="getForecastBtn" onclick="getForecast()" class="btn btn-success">Get Forecast</button>
                 </div>
             </div>
-            
-            
-            <div class="forecast-buttons-container">
-                <button id="getForecastBtn" onclick="getForecast()">Get Forecast</button>
-                <button id="downloadCsvBtn" onclick="downloadForecastCsv()" class="download-btn" style="display: none;">📥 Download Forecast CSV</button>
-                <button id="downloadAudienceCsvBtn" onclick="downloadAudienceCsv()" class="download-btn" style="display: none;">📥 Download Audience CSV</button>
-                <button id="createPresentationBtn" onclick="createPresentation()" class="presentation-btn" style="display: none;">📊 Create Presentation</button>
             </div>
         </div>
         
-        <!-- Forecast Results -->
-        <div id="forecastResults"></div>
+        <!-- Forecast Results Card -->
+        <div class="card mb-4 d-none" id="forecastResultsCard">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="bi bi-graph-up me-2"></i>Forecast Results</h3>
+            </div>
+            <div class="card-body">
+                <div id="forecastResults"></div>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-start flex-wrap" style="gap: 50px;">
+                    <button id="downloadCsvBtn" onclick="downloadForecastCsv()" class="btn btn-info d-none"><i class="bi bi-download me-1"></i>Download Forecast CSV</button>
+                    <button id="downloadAudienceCsvBtn" onclick="downloadAudienceCsv()" class="btn btn-info d-none"><i class="bi bi-download me-1"></i>Download Audience CSV</button>
+                    <button id="createPresentationBtn" onclick="createPresentation()" class="btn btn-purple d-none"><i class="bi bi-file-earmark-slides me-1"></i>Create Presentation</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
     
-    <!-- Add Location Modal -->
-    <div id="addLocationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Add Location to Database</h3>
-                <span class="modal-close" onclick="closeAddLocationModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <!-- Toggle Switch -->
-                <div class="form-group">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="locationModeToggle" onchange="toggleLocationMode()">
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-text">Single Location</span>
-                    </label>
-                </div>
-                
-                <!-- Single Location Section -->
-                <div id="singleLocationSection" class="form-group">
-                    <label for="modalSingleLocationSearch">Select Location:</label>
-                    <div class="search-input-container">
-                        <input type="text" id="modalSingleLocationSearch" placeholder="Search for a location..." class="search-input" autocomplete="off">
-                        <div id="modalSingleLocationDropdown" class="search-dropdown"></div>
-                    </div>
-                    <div id="modalSingleLocationChip" class="chips-container single-location-chip"></div>
-                </div>
-                
-                <!-- Location Group Section -->
-                <div id="locationGroupSection" class="form-group" style="display: none;">
-                    <!-- Included Locations Section -->
-                    <div class="form-group">
-                        <label for="modalIncludedLocationSearch">Included Locations:</label>
-                        <div class="search-input-container">
-                            <input type="text" id="modalIncludedLocationSearch" placeholder="Search for locations to include..." class="search-input" autocomplete="off">
-                            <div id="modalIncludedLocationDropdown" class="search-dropdown"></div>
-                        </div>
-                        <div id="modalIncludedLocationsChips" class="chips-container included-chips"></div>
-                    </div>
-                    
-                    <!-- Excluded Locations Section -->
-                    <div class="form-group">
-                        <label for="modalExcludedLocationSearch">Excluded Locations:</label>
-                        <div class="search-input-container">
-                            <input type="text" id="modalExcludedLocationSearch" placeholder="Search for locations to exclude..." class="search-input" autocomplete="off">
-                            <div id="modalExcludedLocationDropdown" class="search-dropdown"></div>
-                        </div>
-                        <div id="modalExcludedLocationsChips" class="chips-container excluded-chips"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="modalNameAsId">Name as ID:</label>
-                        <input type="text" id="modalNameAsId" placeholder="Enter name as ID (e.g., Haryana_excluding_Gurgaon)">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" onclick="closeAddLocationModal()" class="btn-secondary">Cancel</button>
-                <button type="button" onclick="saveLocation()" class="btn-primary" id="modalSaveButton">Save Location</button>
-            </div>
-        </div>
-    </div>
-    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/script.js"></script>
 </body>
 </html>

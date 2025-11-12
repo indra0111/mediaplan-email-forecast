@@ -1,52 +1,59 @@
-body {
-    font-family: Arial, sans-serif;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f5f5f5;
-}
-.container {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-.form-group {
-    margin-bottom: 15px;
-}
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-input[type="text"], textarea, select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-textarea {
-    height: 150px;
-    resize: vertical;
-}
-button {
-    background-color: #4CAF50;
+/* Bootstrap Customizations */
+.btn-purple {
+    background-color: #9C27B0;
     color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-    font-weight: bold;
+    border-color: #9C27B0;
 }
-button:hover {
-    background-color: #45a049;
+
+.btn-purple:hover {
+    background-color: #7B1FA2;
+    border-color: #7B1FA2;
+    color: white;
 }
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+
+/* Custom styles that complement Bootstrap */
+body {
+    background-color: #f5f5f5;
+    background-image: url('/static/images/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Navbar Logo */
+.navbar-logo {
+    height: 40px;
+    width: auto;
+    max-height: 50px;
+}
+
+/* Ensure cards have proper background for readability */
+.card {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: rgba(13, 110, 253, 0.9) !important;
+    border-bottom: 2px solid rgba(13, 110, 253, 1);
+}
+
+.card-footer {
+    background-color: rgba(248, 249, 250, 0.95) !important;
+}
+
+/* Navbar styling */
+.navbar {
+    backdrop-filter: blur(10px);
+    z-index: 1030;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    color: white !important;
 }
 /* .loading {
     display: none;
@@ -75,19 +82,7 @@ button:disabled {
     color: green;
     margin-top: 10px;
 }
-.form-section {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-}
-.form-section h3 {
-    margin-top: 0;
-    color: #333;
-    border-bottom: 2px solid #4CAF50;
-    padding-bottom: 10px;
-}
+/* Form sections are now in accordion, so we can remove this */
 .abvr-item {
     background-color: white;
     padding: 15px;
@@ -155,6 +150,17 @@ button:disabled {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.select-all-section input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.select-all-section label {
+    margin: 0;
+    cursor: pointer;
 }
 .cohort-item, .preset-item {
     background-color: white;
@@ -374,13 +380,19 @@ tr:hover {
 }
 .preset-section {
     margin-bottom: 30px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
 }
 .preset-title {
     background-color: #e9ecef;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
     font-weight: bold;
+    font-size: 1.1em;
+    color: #495057;
 }
 .hidden {
     display: none;
@@ -571,6 +583,74 @@ tr:hover {
 }
 .chip .remove-chip:hover {
     opacity: 0.8;
+}
+
+/* Keyword Chips Styles */
+.keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.keyword-chip-selected {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+    border: 2px solid #FF9800;
+}
+
+.keyword-chip-unselected {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #6c757d;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid #dee2e6;
+}
+
+.keyword-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.keyword-chip-selected:hover {
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.remove-keyword-chip {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+    margin-left: 4px;
+}
+
+.keyword-chip-unselected .remove-keyword-chip {
+    background: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
+}
+
+.remove-keyword-chip:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.keyword-chip-unselected .remove-keyword-chip:hover {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
 }
 .chips-input {
     border: none;
@@ -806,72 +886,45 @@ tr:hover {
     margin-top: 10px;
 }
 
-/* Age Input Styling */
-.age-input-wrapper {
+/* Age Range Input Styling */
+.age-range-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
-    padding: 14px 18px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 2px solid #e1e5e9;
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    min-height: 60px;
 }
 
-.age-input-wrapper:hover {
-    border-color: #4CAF50;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.1);
-}
-
-.age-input-wrapper:focus-within {
-    border-color: #4CAF50;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
-}
-
-.age-input-wrapper input[type="text"] {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 16px;
-    font-weight: 500;
-    color: #2c3e50;
-    padding: 0;
-    margin: 0;
-}
-
-.age-input-wrapper input[type="text"]:focus {
-    outline: none;
-}
-
-.age-input-wrapper input[type="text"]::placeholder {
-    color: #95a5a6;
-    font-weight: 400;
-}
-
-.age-input-suffix {
-    font-size: 14px;
+.age-range-input {
+    text-align: center;
     font-weight: 600;
-    color: #7f8c8d;
-    margin-left: 8px;
-    padding: 4px 8px;
-    background: rgba(76, 175, 80, 0.1);
-    border-radius: 6px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 80px;
+}
+
+.age-range-input:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    outline: none;
+}
+
+.age-range-input:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Special styling for duration input (single input) */
+#duration.age-range-input {
+    flex: 0 1 auto;
+    min-width: 100px;
+    max-width: 150px;
+}
+
+.age-range-separator {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 14px;
     white-space: nowrap;
-}
-
-.age-input-help {
-    margin-top: 8px;
-}
-
-.age-input-help p {
-    font-size: 13px;
-    color: #7f8c8d;
-    margin: 0;
-    font-style: italic;
 }
 
 /* Toast Notification System */
@@ -879,8 +932,13 @@ tr:hover {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 10000;
+    z-index: 99999;
     pointer-events: none;
+    display: block !important;
+    visibility: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
 }
 
 .toast {
@@ -895,9 +953,15 @@ tr:hover {
     position: relative;
     border-left: 4px solid #4CAF50;
     animation: slideInRight 0.3s ease-out;
-    display: flex;
+    display: flex !important;
     align-items: flex-start;
     gap: 12px;
+    opacity: 1;
+    visibility: visible;
+    min-height: auto;
+    max-height: none;
+    height: auto;
+    overflow: visible;
 }
 
 .toast.success {
@@ -925,18 +989,30 @@ tr:hover {
 .toast-content {
     flex: 1;
     min-width: 0;
+    overflow: visible;
+    height: auto;
+    min-height: auto;
+    max-height: none;
 }
 
 .toast-title {
     font-weight: 600;
     margin-bottom: 4px;
     color: #333;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .toast-message {
     color: #666;
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    overflow: visible;
+    height: auto;
 }
 
 .toast-close {
@@ -1024,16 +1100,23 @@ tr:hover {
         bottom: 10px;
         right: 10px;
         left: 10px;
+        max-height: none;
+        height: auto;
+        overflow: visible;
     }
     
     .toast {
         min-width: auto;
         max-width: none;
         width: 100%;
+        min-height: auto;
+        max-height: none;
+        height: auto;
+        overflow: visible;
     }
 }
 
-/* Locations Not Found Section */
+/* Locations Not Resolved Section */
 .locations-not-found-section {
     background-color: #fff3cd;
     border: 1px solid #ffeaa7;
@@ -1200,7 +1283,7 @@ tr:hover {
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: #003366;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -1210,11 +1293,11 @@ tr:hover {
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
+    background-color: #002244;
 }
 
 .btn-secondary {
-    background-color: #6c757d;
+    background-color: #ffcc00;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -1224,7 +1307,7 @@ tr:hover {
 }
 
 .btn-secondary:hover {
-    background-color: #545b62;
+    background-color: #e6b800;
 }
 
 .btn-primary:disabled,
@@ -1297,8 +1380,17 @@ tr:hover {
 .radio-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 6px;
     margin-top: 8px;
+}
+
+.radio-group.compact {
+    gap: 4px;
+}
+
+/* Force creative size radio buttons to stay in one row */
+.radio-group[data-category="creative"].compact {
+    flex-wrap: nowrap;
 }
 
 .radio-option {
@@ -1312,9 +1404,24 @@ tr:hover {
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
-    min-width: 120px;
+    min-width: 0;
+    flex: 1 1 auto;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: hidden;
+}
+
+.radio-option.compact {
+    padding: 8px 12px;
+    border-radius: 8px;
+    flex: 0 1 auto;
+    min-width: fit-content;
+}
+
+/* Ensure creative size options fit in one row */
+.radio-group[data-category="creative"].compact .radio-option.compact {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 10px;
 }
 
 .radio-option::before {
@@ -1331,9 +1438,14 @@ tr:hover {
 }
 
 .radio-option:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: #4CAF50;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+}
+
+.radio-option.compact:hover {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
 }
 
 .radio-option:hover::before {
@@ -1343,12 +1455,19 @@ tr:hover {
 .radio-option input[type="radio"] {
     position: relative;
     z-index: 1;
-    margin-right: 12px;
-    width: 20px;
-    height: 20px;
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
     accent-color: #4CAF50;
     cursor: pointer;
-    transform: scale(1.1);
+    transform: scale(1);
+    flex-shrink: 0;
+}
+
+.radio-option.compact input[type="radio"] {
+    margin-right: 6px;
+    width: 16px;
+    height: 16px;
 }
 
 .radio-label {
@@ -1359,6 +1478,17 @@ tr:hover {
     color: #2c3e50;
     transition: all 0.3s ease;
     letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.radio-option.compact .radio-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Smaller font for creative size to fit in one row */
+.radio-group[data-category="creative"].compact .radio-option.compact .radio-label {
+    font-size: 12px;
 }
 
 /* Selected state styling */
@@ -1368,8 +1498,17 @@ tr:hover {
     transform: scale(1.02);
 }
 
+.radio-option.compact input[type="radio"]:checked + .radio-label {
+    font-weight: 600;
+    transform: scale(1);
+}
+
 .radio-option input[type="radio"]:checked {
     transform: scale(1.2);
+}
+
+.radio-option.compact input[type="radio"]:checked {
+    transform: scale(1.1);
 }
 
 /* Enhanced selected state for the entire option */
@@ -1379,6 +1518,11 @@ tr:hover {
     border-width: 2px;
     box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
     transform: translateY(-1px);
+}
+
+.radio-option.compact:has(input[type="radio"]:checked) {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(76, 175, 80, 0.25);
 }
 
 .radio-option:has(input[type="radio"]:checked)::before {
