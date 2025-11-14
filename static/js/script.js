@@ -2170,14 +2170,46 @@ function downloadForecastCsv() {
     }
     
     // Get selected ABVRs
-    const selectedAbvrs = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+    const selectedAbvrsFromMain = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+
+    const selectedAbvrsFromCohorts = Array.from(document.querySelectorAll('.cohort-abvr-checkbox:checked'))
         .map(checkbox => checkbox.value);
     
+    // Combine all selected ABVRs
+    const selectedAbvrs = [...new Set([...selectedAbvrsFromMain, ...selectedAbvrsFromCohorts])];
+
+    // Combine abvr data from all sources
+    const allAbvrs = [];
+    
+    // Add ABVRs from cohort_auds (cohort-specific ABVRs)
+    if (currentData.cohort_auds) {
+        for (const cohortName in currentData.cohort_auds) {
+            if (Array.isArray(currentData.cohort_auds[cohortName])) {
+                allAbvrs.push(...currentData.cohort_auds[cohortName]);
+            }
+        }
+    }
+    
+    // Add ABVRs from main sections
+    allAbvrs.push(...(currentData.abvrs || []));
+    allAbvrs.push(...(currentData.left_abvrs || []));
+
+    // Filter to get only selected ABVRs, avoiding duplicates by abvr code
+    const selectedAbvrDetails = [];
+    const seenAbvrs = new Set();
+    
+    allAbvrs.forEach(abvr => {
+        if (selectedAbvrs.includes(abvr.abvr) && !seenAbvrs.has(abvr.abvr)) {
+            selectedAbvrDetails.push(abvr);
+            seenAbvrs.add(abvr.abvr);
+        }
+    });
     // Get duration
     const duration = parseInt(document.getElementById('duration').value) || 30;
     
     // Generate CSV content
-    const csvContent = generateForecastCsv(currentForecastData, selectedAbvrs, duration);
+    const csvContent = generateForecastCsv(currentForecastData, selectedAbvrDetails, duration);
     
     // Create and download the file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -2199,14 +2231,41 @@ function downloadAudienceCsv() {
         return;
     }
     
-    // Get selected ABVRs
-    const selectedAbvrs = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+    const selectedAbvrsFromMain = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
         .map(checkbox => checkbox.value);
 
-    // Combine abvr data
-    const allAbvrs = [...(currentData.cohort_abvrs || []), ...(currentData.abvrs || []), ...(currentData.left_abvrs || [])];
+    const selectedAbvrsFromCohorts = Array.from(document.querySelectorAll('.cohort-abvr-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    // Combine all selected ABVRs
+    const selectedAbvrs = [...new Set([...selectedAbvrsFromMain, ...selectedAbvrsFromCohorts])];
 
-    const selectedAbvrDetails = allAbvrs.filter(abvr => selectedAbvrs.includes(abvr.abvr));
+    // Combine abvr data from all sources
+    const allAbvrs = [];
+    
+    // Add ABVRs from cohort_auds (cohort-specific ABVRs)
+    if (currentData.cohort_auds) {
+        for (const cohortName in currentData.cohort_auds) {
+            if (Array.isArray(currentData.cohort_auds[cohortName])) {
+                allAbvrs.push(...currentData.cohort_auds[cohortName]);
+            }
+        }
+    }
+    
+    // Add ABVRs from main sections
+    allAbvrs.push(...(currentData.abvrs || []));
+    allAbvrs.push(...(currentData.left_abvrs || []));
+
+    // Filter to get only selected ABVRs, avoiding duplicates by abvr code
+    const selectedAbvrDetails = [];
+    const seenAbvrs = new Set();
+    
+    allAbvrs.forEach(abvr => {
+        if (selectedAbvrs.includes(abvr.abvr) && !seenAbvrs.has(abvr.abvr)) {
+            selectedAbvrDetails.push(abvr);
+            seenAbvrs.add(abvr.abvr);
+        }
+    });
 
     // Build audience data rows
     const abvrRows = [];
@@ -2239,13 +2298,8 @@ function downloadAudienceCsv() {
     showSuccessToast('Download Complete', 'Your audience data has been downloaded successfully!');
 }
 
-function generateForecastCsv(forecastData, selectedAbvrs, duration) {
+function generateForecastCsv(forecastData, selectedAbvrDetails, duration) {
     const csvRows = [];
-
-    // Combine abvr data
-    const allAbvrs = [...(currentData.cohort_abvrs || []), ...(currentData.abvrs || []), ...(currentData.left_abvrs || [])];
-
-    const selectedAbvrDetails = allAbvrs.filter(abvr => selectedAbvrs.includes(abvr.abvr));
 
     const forecastRows = [];
 
