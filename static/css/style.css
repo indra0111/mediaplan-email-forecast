@@ -5,6 +5,16 @@
     border-color: #9C27B0;
 }
 
+.accordion-collapse {
+    scroll-margin-top: 0;
+    scroll-margin-bottom: 0;
+}
+
+.accordion-item {
+    scroll-margin-top: 0;
+    scroll-margin-bottom: 0;
+}
+
 .btn-purple:hover {
     background-color: #7B1FA2;
     border-color: #7B1FA2;

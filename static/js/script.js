@@ -418,6 +418,10 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
             if (locations_not_found) {
                 displayLocationsNotFound(locations_not_found);
             }
+            document.getElementById('editableForm').scrollIntoView({
+                behavior: 'smooth'
+            });
+            showSuccessToast('Processing Success', 'Email processed successfully');
         } else {
             showErrorToast('Processing Error', data.detail || 'An error occurred');
         }
@@ -1847,6 +1851,10 @@ async function getForecast() {
         
         if (response.ok) {
             displayForecastResults(data);
+            document.getElementById('forecastResults').scrollIntoView({
+                behavior: 'smooth'
+            });
+            showSuccessToast('Forecast Success', 'Forecast data fetched successfully');
         } else {
             showErrorToast('Forecast Error', data.detail || 'An error occurred');
         }
