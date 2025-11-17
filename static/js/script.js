@@ -28,7 +28,7 @@ const API_CONFIG = {
     audience_api_url: 'http://172.29.83.21:8081',
     // locations_api_url: 'http://172.23.53.62:8081',
     locations_api_url: 'http://172.29.83.22:8080',
-    presentation_api_url: 'http://localhost:8001'
+    presentation_api_url: 'http://172.23.53.62:8001'
 };
 
 function showError(message, duration = 5000) {
@@ -1780,11 +1780,16 @@ async function getForecast() {
     
     // Get selected Keywords
     const selectedKeywords = (currentData.keywords || []).filter(k => k.checked).map(k => k.keyword);
-    
-    // Get selected ABVRs
-    const selectedAbvrs = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+
+    const selectedAbvrsFromMain = Array.from(document.querySelectorAll('.abvr-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+
+    const selectedAbvrsFromCohorts = Array.from(document.querySelectorAll('.cohort-abvr-checkbox:checked'))
         .map(checkbox => checkbox.value);
     
+    // Combine all selected ABVRs
+    const selectedAbvrs = [...new Set([...selectedAbvrsFromMain, ...selectedAbvrsFromCohorts])];
+
     if (selectedLocations.length === 0) {
         showErrorToast('Missing Locations', 'Please select at least one location.');
         // Restore button
