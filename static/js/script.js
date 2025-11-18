@@ -248,12 +248,10 @@ function updateFileList() {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
         
-        const fileIcon = getFileIcon(file.name);
         const fileSize = formatFileSize(file.size);
         
         fileItem.innerHTML = `
             <div class="file-item-info">
-                <span class="file-icon">${fileIcon}</span>
                 <div>
                     <div class="file-name">${file.name}</div>
                     <div class="file-size">${fileSize}</div>
@@ -264,16 +262,6 @@ function updateFileList() {
         
         fileList.appendChild(fileItem);
     });
-}
-
-function getFileIcon(filename) {
-    const extension = filename.split('.').pop().toLowerCase();
-    switch (extension) {
-        case 'csv': return '📊';
-        case 'xlsx': case 'xls': return '📈';
-        case 'txt': return '📄';
-        default: return '📁';
-    }
 }
 
 function formatFileSize(bytes) {
@@ -312,7 +300,35 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
     const editableForm = document.getElementById('editableForm');
     const forecastResults = document.getElementById('forecastResults');
     
-    // Disable the submit button and change its text
+    // Disable all form inputs
+    const subjectInput = document.getElementById('subject');
+    const bodyInput = document.getElementById('body');
+    const fileUploadInput = document.getElementById('fileUpload');
+    const fileUploadContainer = document.querySelector('.file-upload-container');
+    const fileRemoveButtons = document.querySelectorAll('.file-remove');
+    
+    // Disable text inputs
+    subjectInput.disabled = true;
+    bodyInput.disabled = true;
+    fileRemoveButtons.forEach(button => {
+        button.disabled = true;
+        button.style.pointerEvents = 'none';
+        button.style.opacity = '0.6';
+        button.style.cursor = 'not-allowed';
+    });
+    // Disable file upload input
+    if (fileUploadInput) {
+        fileUploadInput.disabled = true;
+    }
+    
+    // Disable file upload container visually and functionally
+    if (fileUploadContainer) {
+        fileUploadContainer.style.pointerEvents = 'none';
+        fileUploadContainer.style.opacity = '0.6';
+        fileUploadContainer.style.cursor = 'not-allowed';
+    }
+    
+    // Disable submit button
     submitButton.disabled = true;
     submitButton.textContent = 'Processing...';
 
@@ -429,7 +445,37 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
         console.error('Error details:', err);
         showErrorToast('Request Error', 'An error occurred while processing the request: ' + err.message);
     } finally {
-        // Re-enable the submit button and restore its text
+        // Re-enable all form inputs
+        const subjectInput = document.getElementById('subject');
+        const bodyInput = document.getElementById('body');
+        const fileUploadInput = document.getElementById('fileUpload');
+        const fileUploadContainer = document.querySelector('.file-upload-container');
+        
+        // Re-enable text inputs
+        if (subjectInput) subjectInput.disabled = false;
+        if (bodyInput) bodyInput.disabled = false;
+        
+        // Re-enable file upload input
+        if (fileUploadInput) {
+            fileUploadInput.disabled = false;
+        }
+        
+        // Re-enable file upload container
+        if (fileUploadContainer) {
+            fileUploadContainer.style.pointerEvents = 'auto';
+            fileUploadContainer.style.opacity = '1';
+            fileUploadContainer.style.cursor = 'pointer';
+        }
+        
+        // Re-enable file remove buttons
+        fileRemoveButtons.forEach(button => {
+            button.disabled = false;
+            button.style.pointerEvents = 'auto';
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+        });
+        
+        // Re-enable submit button
         submitButton.disabled = false;
         submitButton.textContent = originalButtonText;
     }
