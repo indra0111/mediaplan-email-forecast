@@ -1842,7 +1842,13 @@ async function getForecast() {
         fileUploadContainer.style.opacity = '0.6';
         fileUploadContainer.style.cursor = 'not-allowed';
     }
-
+    document.querySelectorAll('.accordion-button').forEach(btn => {
+        btn.classList.add('collapsed');
+    });
+    document.querySelectorAll('.accordion-collapse.show').forEach(el => {
+        const collapse = bootstrap.Collapse.getOrCreateInstance(el);
+        collapse.hide();
+    });
     const emailFormSubmitButton = document.getElementById('emailForm').querySelector('button[type="submit"]');
     emailFormSubmitButton.disabled = true;
 
@@ -2233,7 +2239,13 @@ async function createPresentation() {
     const originalText = createPresentationBtn.textContent;
     createPresentationBtn.textContent = 'Creating Presentation...';
     createPresentationBtn.disabled = true;
-    
+    document.querySelectorAll('.accordion-button').forEach(btn => {
+        btn.classList.add('collapsed');
+    });
+    document.querySelectorAll('.accordion-collapse.show').forEach(el => {
+        const collapse = bootstrap.Collapse.getOrCreateInstance(el);
+        collapse.hide();
+    });
     const oldSlidesLink = document.querySelector('.slides-link-container');
     if (oldSlidesLink) oldSlidesLink.remove();
 
@@ -2266,9 +2278,9 @@ async function createPresentation() {
                 slidesLink.className = 'slides-link-container';
                 slidesLink.innerHTML = `
                     <div class="slides-link-content">
-                        <h4>📊 Presentation Generated Successfully!</h4>
-                        <a href="${ppt_link}" target="_blank" class="slides-link-btn">
-                            🎯 Open Google Slides Presentation
+                        <h4>Presentation Generated Successfully!</h4>
+                        <a href="${ppt_link}" target="_blank" class="slides-link-btn btn-primary">
+                            Open Google Slides Presentation
                         </a>
                         <p class="slides-link-note">Click the button above to view your presentation in Google Slides</p>
                     </div>

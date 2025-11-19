@@ -849,10 +849,10 @@ tr:hover {
 .slides-link-container {
     margin-top: 20px;
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #F7C35E;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    color: white;
+    color: #333;
 }
 
 .slides-link-content {
