@@ -1816,6 +1816,36 @@ async function getForecast() {
     getForecastBtn.textContent = 'Getting Forecast...';
     getForecastBtn.disabled = true;
     
+    const subjectInput = document.getElementById('subject');
+    const bodyInput = document.getElementById('body');
+    const fileUploadInput = document.getElementById('fileUpload');
+    const fileUploadContainer = document.querySelector('.file-upload-container');
+    const fileRemoveButtons = document.querySelectorAll('.file-remove');
+    
+    // Disable text inputs
+    subjectInput.disabled = true;
+    bodyInput.disabled = true;
+    fileRemoveButtons.forEach(button => {
+        button.disabled = true;
+        button.style.pointerEvents = 'none';
+        button.style.opacity = '0.6';
+        button.style.cursor = 'not-allowed';
+    });
+    // Disable file upload input
+    if (fileUploadInput) {
+        fileUploadInput.disabled = true;
+    }
+    
+    // Disable file upload container visually and functionally
+    if (fileUploadContainer) {
+        fileUploadContainer.style.pointerEvents = 'none';
+        fileUploadContainer.style.opacity = '0.6';
+        fileUploadContainer.style.cursor = 'not-allowed';
+    }
+
+    const emailFormSubmitButton = document.getElementById('emailForm').querySelector('button[type="submit"]');
+    emailFormSubmitButton.disabled = true;
+
     // Get selected Locations (by index)
     const selectedLocationIndices = Array.from(document.querySelectorAll('.location-checkbox:checked'))
         .map(checkbox => parseInt(checkbox.value));
@@ -1913,6 +1943,27 @@ async function getForecast() {
         console.error('Error details:', err);
         showErrorToast('Forecast Error', 'An error occurred while getting forecast: ' + err.message);
     } finally {
+        // Disable text inputs
+        subjectInput.disabled = false;
+        bodyInput.disabled = false;
+        fileRemoveButtons.forEach(button => {
+            button.disabled = false;
+            button.style.pointerEvents = 'auto';
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+        });
+        // Disable file upload input
+        if (fileUploadInput) {
+            fileUploadInput.disabled = false;
+        }
+        
+        // Disable file upload container visually and functionally
+        if (fileUploadContainer) {
+            fileUploadContainer.style.pointerEvents = 'auto';
+            fileUploadContainer.style.opacity = '1';
+            fileUploadContainer.style.cursor = 'pointer';
+        }
+        emailFormSubmitButton.disabled = false;
         getForecastBtn.textContent = originalText;
         getForecastBtn.disabled = false;
     }
@@ -1976,8 +2027,8 @@ function displayForecastResults(forecastData) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${location}</td>
-                    <td>${metrics.user.toFixed(2)}</td>
-                    <td>${metrics.impr.toFixed(2)}</td>
+                    <td>${metrics.user.toFixed(2)}M</td>
+                    <td>${metrics.impr.toFixed(2)}M</td>
                 `;
                 tbody.appendChild(row);
             }
@@ -2147,6 +2198,37 @@ async function createPresentation() {
         showErrorToast('Age Format Error', 'Please enter a valid target age range for the presentation.');
         return;
     }
+    const subjectInput = document.getElementById('subject');
+    const bodyInput = document.getElementById('body');
+    const fileUploadInput = document.getElementById('fileUpload');
+    const fileUploadContainer = document.querySelector('.file-upload-container');
+    const fileRemoveButtons = document.querySelectorAll('.file-remove');
+    
+    // Disable text inputs
+    subjectInput.disabled = true;
+    bodyInput.disabled = true;
+    fileRemoveButtons.forEach(button => {
+        button.disabled = true;
+        button.style.pointerEvents = 'none';
+        button.style.opacity = '0.6';
+        button.style.cursor = 'not-allowed';
+    });
+    // Disable file upload input
+    if (fileUploadInput) {
+        fileUploadInput.disabled = true;
+    }
+    
+    // Disable file upload container visually and functionally
+    if (fileUploadContainer) {
+        fileUploadContainer.style.pointerEvents = 'none';
+        fileUploadContainer.style.opacity = '0.6';
+        fileUploadContainer.style.cursor = 'not-allowed';
+    }
+
+    const emailFormSubmitButton = document.getElementById('emailForm').querySelector('button[type="submit"]');
+    emailFormSubmitButton.disabled = true;
+    const getForecastBtn = document.getElementById('getForecastBtn');
+    getForecastBtn.disabled = true;
     const createPresentationBtn = document.getElementById('createPresentationBtn');
     const originalText = createPresentationBtn.textContent;
     createPresentationBtn.textContent = 'Creating Presentation...';
@@ -2209,8 +2291,29 @@ async function createPresentation() {
         console.error('Error creating presentation:', err);
         showErrorToast('Presentation Error', 'An error occurred while creating the presentation: ' + err.message);
     } finally {
+        subjectInput.disabled = false;
+        bodyInput.disabled = false;
+        fileRemoveButtons.forEach(button => {
+            button.disabled = false;
+            button.style.pointerEvents = 'auto';
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+        });
+        // Disable file upload input
+        if (fileUploadInput) {
+            fileUploadInput.disabled = false;
+        }
+        
+        // Disable file upload container visually and functionally
+        if (fileUploadContainer) {
+            fileUploadContainer.style.pointerEvents = 'auto';
+            fileUploadContainer.style.opacity = '1';
+            fileUploadContainer.style.cursor = 'pointer';
+        }    
         createPresentationBtn.textContent = originalText;
         createPresentationBtn.disabled = false;
+        emailFormSubmitButton.disabled = false;
+        getForecastBtn.disabled = false;
     }
 }
 
