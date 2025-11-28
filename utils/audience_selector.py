@@ -216,6 +216,8 @@ def get_filtered_audience_data(cohorts=None) -> Dict[str, List[Dict[str, Any]]]:
     try:
         cohort_abvrs = get_abvrs_from_cohorts(cohorts)
         combined_abvrs = [part.strip() for abvr in cohort_abvrs.values() for part in abvr.split(',') if part.strip()]
+        if len(combined_abvrs)==0:
+            return {}
         url = f"{os.getenv('AUDIENCE_API_URL')}/getAudienceInfo"
         response = requests.post(url, data=",".join(list(combined_abvrs)))
         data = response.json()
