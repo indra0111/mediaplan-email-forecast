@@ -421,8 +421,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
             // Get all available locations from the API
             availableLocations = await getAllAvailableLocations();
             // Get all available location groups from the API
-            const unformattedAvailableLocationGroups = await getAllAvailableLocationGroups();
-            availableLocationGroups = formatLocationGroups(unformattedAvailableLocationGroups);
+            availableLocationGroups = await getAllAvailableLocationGroups();
             displayEditableForm(data);
             editableForm.classList.remove('d-none');
             
@@ -513,16 +512,22 @@ async function getAllAvailableLocationGroups() {
         const transformed = {};
 
         for (const groupName in data) {
-            const locations = data[groupName].locations || [];
+            const unformattedIncludedLocations = data[groupName].includedLocations || [];
+            const unformattedExcludedLocations = data[groupName].excludedLocations || [];
 
-            const includedLocations = locations.map(loc => ({
+            const formattedIncludedLocations = unformattedIncludedLocations.map(loc => ({
+                name: `${loc.name},${loc.countryCode},${loc.type}`,
+                id: loc.locationId
+            }));
+
+            const formattedExcludedLocations = unformattedExcludedLocations.map(loc => ({
                 name: `${loc.name},${loc.countryCode},${loc.type}`,
                 id: loc.locationId
             }));
 
             transformed[groupName] = {
-                includedLocations,
-                excludedLocations: [],
+                includedLocations: formattedIncludedLocations,
+                excludedLocations: formattedExcludedLocations,
                 nameAsId: groupName
             };
         }
